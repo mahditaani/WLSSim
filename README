@@ -1,0 +1,9 @@
+# This is a program to simulate the propagation of a photon in a wavelength shifter
+
+# USAGE
+root -l main.cpp
+
+# Variables
+numPhots	Number of photons to simulate
+numBounce	Maximum number of reflections to simulate
+

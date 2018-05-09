@@ -152,6 +152,9 @@ int main(){
 	int numPhots = 10000; // Number of photons to generate 
 	int seed = 12345; // Seed for random generator
 	float increment = 0.1; // Value to increment the steps of the photon
+
+	int nBin = 50;
+
 	// WLS properties
 	double WLSLength = 28.0; // cm.
 	double WLSThickness = 0; // Not used yet (2D approximation)
@@ -159,8 +162,6 @@ int main(){
 
 	// PMT properties
 	double PMTRadius = 3.8; // cm.
-
-
 
 	// Efficiencies for model
 	double WLSEfficiency = 1; 
@@ -318,21 +319,21 @@ int main(){
 	TFile *outfile = new TFile("WLS.root", "RECREATE");
 	
 	// Histograms
-	TH1D *generatedTheta = new TH1D("generatedTheta", "generatedTheta", 50, 0, 2*PI); // captured photons plotted by radius
-	TH1D *radiusHist = new TH1D("radiusHist", "radiusHist", 50, 0, WLSLength); // captured photons plotted by radius
-	TH1D *radiusCapture = new TH1D("radiusCapture", "radiusCapture", 50, 0, WLSLength); // captured photons plotted by radius
-	TH1D *radiusCapture0 = new TH1D("radiusCapture0", "radiusCapture0", 50, 0, WLSLength); // captured photons without bouncing
-	TH1D *radiusCapture1 = new TH1D("radiusCapture1", "radiusCapture1", 50, 0, WLSLength); // captured photons bouncing 1 time
-	TH1D *radiusCapture2 = new TH1D("radiusCapture2", "radiusCapture2", 50, 0, WLSLength); // captured photons bouncing two times
-	TH1D *radiusCaptureR = new TH1D("radiusCaptureR", "radiusCaptureR", 50, 0, WLSLength); // captured photons plotted by radius
-	TH1D *radiusCapture0R = new TH1D("radiusCapture0R", "radiusCapture0R", 50, 0, WLSLength); // captured photons without bouncing
-	TH1D *radiusCapture1R = new TH1D("radiusCapture1R", "radiusCapture1R", 50, 0, WLSLength); // captured photons bouncing 1 time
-	TH1D *radiusCapture2R = new TH1D("radiusCapture2R", "radiusCapture2R", 50, 0, WLSLength); // captured photons bouncing two times
+	TH1D *generatedTheta = new TH1D("generatedTheta", "generatedTheta", nBin, 0, 2*PI); // captured photons plotted by radius
+	TH1D *radiusHist = new TH1D("radiusHist", "radiusHist", nBin, 0, WLSLength); // captured photons plotted by radius
+	TH1D *radiusCapture = new TH1D("radiusCapture", "radiusCapture", nBin, 0, WLSLength); // captured photons plotted by radius
+	TH1D *radiusCapture0 = new TH1D("radiusCapture0", "radiusCapture0", nBin, 0, WLSLength); // captured photons without bouncing
+	TH1D *radiusCapture1 = new TH1D("radiusCapture1", "radiusCapture1", nBin, 0, WLSLength); // captured photons bouncing 1 time
+	TH1D *radiusCapture2 = new TH1D("radiusCapture2", "radiusCapture2", nBin, 0, WLSLength); // captured photons bouncing two times
+	TH1D *radiusCaptureR = new TH1D("radiusCaptureR", "radiusCaptureR", nBin, 0, WLSLength); // captured photons plotted by radius
+	TH1D *radiusCapture0R = new TH1D("radiusCapture0R", "radiusCapture0R", nBin, 0, WLSLength); // captured photons without bouncing
+	TH1D *radiusCapture1R = new TH1D("radiusCapture1R", "radiusCapture1R", nBin, 0, WLSLength); // captured photons bouncing 1 time
+	TH1D *radiusCapture2R = new TH1D("radiusCapture2R", "radiusCapture2R", nBin, 0, WLSLength); // captured photons bouncing two times
 	
-	TH2D *generatedPosCart = new TH2D("generatedPosCart", "generatedPosCart", 50, -WLSLength/2, WLSLength/2, 50, -WLSLength/2, WLSLength/2); // mapping of plate
-	TH2D *generatedDirCart = new TH2D("generatedDirCart", "generatedDirCart", 50, -WLSLength/2, WLSLength/2, 50, -WLSLength/2, WLSLength/2); // mapping of plate
-	TH2D *captureMapCart = new TH2D("captureMapCart", "captureMapCart", 50, -WLSLength/2, WLSLength/2, 50, -WLSLength/2, WLSLength/2); // mapping of plate
-	TH2D *captureMap = new TH2D("captureMap", "captureMap", 50, 0, 2*PI, 50, 0, WLSLength); // mapping of plate
+	TH2D *generatedPosCart = new TH2D("generatedPosCart", "generatedPosCart", nBin, -WLSLength/2, WLSLength/2, nBin, -WLSLength/2, WLSLength/2); // mapping of plate
+	TH2D *generatedDirCart = new TH2D("generatedDirCart", "generatedDirCart", nBin, -WLSLength/2, WLSLength/2, nBin, -WLSLength/2, WLSLength/2); // mapping of plate
+	TH2D *captureMapCart = new TH2D("captureMapCart", "captureMapCart", nBin, -WLSLength/2, WLSLength/2, nBin, -WLSLength/2, WLSLength/2); // mapping of plate
+	TH2D *captureMap = new TH2D("captureMap", "captureMap", nBin, 0, 2*PI, nBin, 0, WLSLength); // mapping of plate
 
 	for (int i = 0; i < PhotonVector.size(); i++ ){
 
@@ -357,7 +358,7 @@ int main(){
 	
 	}
 	
-	for (int i = 1; i <= 50; i++){
+	for (int i = 1; i <= nBin; i++){
 		double normVal = radiusHist->GetBinContent(i);
 		if (normVal ==0) normVal = 1;
 

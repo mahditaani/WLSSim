@@ -139,7 +139,7 @@ void ReflectPhoton(double *p, double &pDirX, double &pDirY,double wlsL){
 	p[2] = acos(pDirX);
 	
 	if (pDirY < 0){
-		p[2] += PI;
+		p[2] = 2*PI - p[2];
 	}
 }
 
@@ -149,11 +149,11 @@ void ReflectPhoton(double *p, double &pDirX, double &pDirY,double wlsL){
 int main(){
 	bool verbosity = false;
 	int numBounce = 2; // Maximum number of bounces of light to trace
-	int numPhots = 10000; // Number of photons to generate 
+	int numPhots = 1000000; // Number of photons to generate 
 	int seed = 12345; // Seed for random generator
 	float increment = 0.1; // Value to increment the steps of the photon
 
-	int nBin = 50;
+	int nBin = 56;
 
 	// WLS properties
 	double WLSLength = 28.0; // cm.
@@ -166,6 +166,34 @@ int main(){
 	// Efficiencies for model
 	double WLSEfficiency = 1; 
 	double WLSReflection = 1; 
+
+
+
+       // Really messy way to output to a new file
+       double  photPosX = 0;
+       double  photPosY = 0;
+       double  photPosR = 0;
+       double photDirTheta = 0;
+       double photDirX = 0;
+       double photDirY = 0;
+       double initDirX = 0;
+       double initDirY = 0;
+       int hPMT = 0;
+       int reflect = 0;
+
+
+
+       TFile *outfile = new TFile("WLS.root", "RECREATE");
+       TTree *tree = new TTree("simulation", "simulation");
+       tree->Branch("posX", &photPosX, "posX/D");
+       tree->Branch("posY", &photPosY, "posY/D");
+       tree->Branch("posR", &photPosR, "posR/D");
+       tree->Branch("dirX", &photDirX, "dirX/D");
+       tree->Branch("dirY", &photDirY, "dirY/D");
+       tree->Branch("dirTheta", &photDirTheta, "dirTheta/D");
+       tree->Branch("hitPMT", &hPMT, "hitPMT/I");
+       tree->Branch("reflections", &reflect, "reflections/I");
+
 
 	if (verbosity){
 	
@@ -206,10 +234,15 @@ int main(){
 	std::uniform_real_distribution<double> distributionDir(0.0,2*PI);
 //--------------------------------------Start of LOOP---------------------------------------------------------------
 	for (int i = 0; i <numPhots; i++){	
-		double photPosX = 0;
-		double photPosY = 0;
-		double photPosR = 0;
-		
+        	if (i % 1000 == 0){std::cout << "Generating Photon: " << i << std::endl;}
+		photPosX = 0;
+		photPosY = 0;
+		photPosR = 0;
+		photDirTheta = 0;
+		photDirX = 0;
+		photDirY = 0;
+		initDirX = 0;
+		initDirY = 0;
 		bool inPlate = false;	
 		while (!inPlate) {
 			// Across the whole plate
@@ -237,11 +270,11 @@ int main(){
 		// Generate a photon direction 
 		
 //		double photDirTheta = 2*PI*distributionDir(generator);
-		double photDirTheta = distributionDir(generator);
-		double photDirX = cos(photDirTheta);
-		double photDirY = sin(photDirTheta);
-		double initDirX = photDirX;
-		double initDirY = photDirY;
+		photDirTheta = distributionDir(generator);
+		photDirX = cos(photDirTheta);
+		photDirY = sin(photDirTheta);
+		initDirX = photDirX;
+		initDirY = photDirY;
 
 		if (verbosity){
 		
@@ -253,7 +286,8 @@ int main(){
 		// Keep track of the number of bounces
 		double photonPosTemp[3] = {photPosX, photPosY,photDirTheta};
 		bool hitPMT = false; 
-		int reflect = 0;
+		hPMT = 0;
+		reflect = 0;
 		
 		if (verbosity){
 			std::cout << "Propagating photon: " << 1 << std::endl;
@@ -272,7 +306,7 @@ int main(){
 
 			if (HitPMT(photonPosTemp, PMTRadius)) {
 				hitPMT = true;
-				
+				hPMT = 1;		
 				if (verbosity){
 					std::cout << "PMT Hit" << std::endl;
 				
@@ -309,14 +343,12 @@ int main(){
 	}
 //-------------------------END OF LOOP--------------------------------------------------------------------------------------
 
+	// Save output to ROOT file
+	tree->Fill();
 
 
 
 
-
-	// Now we can analyse the results
-	//
-	TFile *outfile = new TFile("WLS.root", "RECREATE");
 	
 	// Histograms
 	TH1D *generatedTheta = new TH1D("generatedTheta", "generatedTheta", nBin, 0, 2*PI); // captured photons plotted by radius
@@ -335,6 +367,22 @@ int main(){
 	TH2D *captureMapCart = new TH2D("captureMapCart", "captureMapCart", nBin, -WLSLength/2, WLSLength/2, nBin, -WLSLength/2, WLSLength/2); // mapping of plate
 	TH2D *captureMap = new TH2D("captureMap", "captureMap", nBin, 0, 2*PI, nBin, 0, WLSLength); // mapping of plate
 
+
+
+        radiusHist->Sumw2();
+        radiusCapture->Sumw2();
+        radiusCapture0->Sumw2();
+        radiusCapture1->Sumw2();
+        radiusCapture2->Sumw2();
+        radiusCaptureR->Sumw2();
+        radiusCapture0R->Sumw2();
+        radiusCapture1R->Sumw2();
+        radiusCapture2R->Sumw2();
+        captureMap->Sumw2();
+        generatedPosCart->Sumw2();
+        generatedDirCart->Sumw2();
+        generatedTheta->Sumw2();
+        captureMapCart->Sumw2();
 	for (int i = 0; i < PhotonVector.size(); i++ ){
 
 		generatedPosCart->Fill(PhotonVector[i].Pos[0], PhotonVector[i].Pos[1]);
@@ -362,10 +410,15 @@ int main(){
 		double normVal = radiusHist->GetBinContent(i);
 		if (normVal ==0) normVal = 1;
 
-		radiusCaptureR->Fill(radiusHist->GetBinCenter(i),radiusCapture->GetBinContent(i)/normVal);
-		radiusCapture0R->Fill(radiusHist->GetBinCenter(i),radiusCapture0->GetBinContent(i)/normVal);
-		radiusCapture1R->Fill(radiusHist->GetBinCenter(i),radiusCapture1->GetBinContent(i)/normVal);
-		radiusCapture2R->Fill(radiusHist->GetBinCenter(i),radiusCapture2->GetBinContent(i)/normVal);
+
+                radiusCaptureR->SetBinContent(i,radiusCapture->GetBinContent(i)/normVal);
+                radiusCaptureR->SetBinError(i,radiusCapture->GetBinError(i)/normVal);
+                radiusCapture0R->SetBinContent(i,radiusCapture0->GetBinContent(i)/normVal);
+                radiusCapture0R->SetBinError(i,radiusCapture0->GetBinError(i)/normVal);
+                radiusCapture1R->SetBinContent(i,radiusCapture1->GetBinContent(i)/normVal);
+                radiusCapture1R->SetBinError(i,radiusCapture1->GetBinError(i)/normVal);
+                radiusCapture2R->SetBinContent(i,radiusCapture2->GetBinContent(i)/normVal);
+                radiusCapture2R->SetBinError(i,radiusCapture2->GetBinError(i)/normVal);
 	
 //	std::cout << "Bin:\t" << i << "\t" << radiusCapture2->GetBinContent(i) << "\t" << radiusHist->GetBinContent(i)<< "\t" <<radiusCapture2->GetBinContent(i)/radiusHist->GetBinContent(i) << std::endl;  	
 	}
@@ -385,6 +438,7 @@ int main(){
 	generatedDirCart->Write();
 	generatedTheta->Write();
 	captureMapCart->Write();
+	tree->Write();
 
 	outfile->Close();
 

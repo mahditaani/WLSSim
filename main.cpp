@@ -17,6 +17,10 @@
 
 
 
+std::default_random_engine gen(12345);
+std::uniform_real_distribution<double> reflect(0.,1.);
+
+
 typedef struct {
 	
 	double Pos[2] = {0,0}; // Photon position
@@ -25,6 +29,7 @@ typedef struct {
 	double Theta = 0; // Photon angle from center
 	bool hitPMT = false;
 	int numBounces = 0;
+	int status = -1; // 0: captured; 1: lost;
 } Phot ; // Structure to hold the information about the photons
 
 enum Shape {
@@ -170,6 +175,89 @@ bool HitEdge(double *p, double *wlsL, Shape shape){
 
 }
 
+// ReflectPhoton function reverses the direction of the photon hitting an edge. Includes total internal reflection
+bool ReflectPhoton(double *p, double &pDirX, double &pDirY,double *wlsL, Shape shape, double crit, double reflectivity){
+
+	bool ref = false;
+	bool mirror = false;
+	bool lost = false;
+
+//	std::cout << "ref, mirror " << ref << " " << mirror << std::endl; //DEBUG
+	// Ensures that total internal reflection is treated separately from the reflective additions
+	if (shape == Square || shape == Rectangle){	
+		if (p[0] == -wlsL[0]/2){ 
+			if (p[2] >= PI + crit || p[2] <= PI - crit){ref = true;}
+		}
+		if (p[0] == wlsL[0]/2){
+			if (p[2] <= 2*PI -crit || p[2] >= crit){ref = true;}
+		}
+		if (p[1] == -wlsL[1]/2){
+			if (p[2] <= 3*PI/2 - crit || p[2] >= 3*PI/2 + crit){ref = true;}
+		}
+		if (p[1] == wlsL[1]/2){
+			if (p[2] <= PI/2 - crit || p[2] >= PI/2 + crit) {ref = true;}
+		}
+//	std::cout << "P0, p1, p2, crit " << p[0] << ", " << p[1] << ", " << p[2]*180/PI << ", " << crit*180/PI<< std::endl; //DEBUG
+	}
+	
+	if (!ref) {
+		if (reflect(gen) <= reflectivity) mirror = true;
+	}
+//	std::cout << "ref, mirror " << ref << " " << mirror << std::endl; //DEBUG
+	// work out new direction components
+	if ( (shape == Square || shape == Rectangle) && (ref || mirror)){	
+		if (p[0] == -wlsL[0]/2){ 
+			pDirX*=-1;
+		}
+		if (p[0] == wlsL[0]/2){
+			pDirX*=-1;
+		}
+		if (p[1] == -wlsL[1]/2){
+			pDirY*=-1;
+		}
+		if (p[1] == wlsL[1]/2){
+			pDirY*=-1;
+		}
+		
+		// work out new travelling angle
+		p[2] = acos(pDirX);
+		
+		if (pDirY < 0){
+			p[2] = 2*PI - p[2];
+		}
+	}
+
+	if (shape == Circle){
+
+		double posTemp[2] = {p[0],p[1]}; // store the direction temporarily
+		double dirTemp[2] = {pDirX,pDirY}; // store the direction temporarily
+		double angle = AngFromCenter(p[0],p[1]); // Gives the angle of rotation to get the tangent
+		
+		// Rotate the coordinates for simple calculations
+		Rotate(posTemp, angle);	
+		Rotate(dirTemp, angle);	
+		
+		dirTemp[0] *= -1; // flip the x' direction
+		Rotate(dirTemp, (2*PI-angle)	); // Rotate back the direction coordinates
+
+		pDirX = dirTemp[0];
+		pDirY = dirTemp[1];
+		
+		// work out new travelling angle
+		p[2] = acos(pDirX);
+		
+		if (pDirY < 0){
+			p[2] = 2*PI - p[2];
+		}
+		
+
+
+	}
+	
+	if (!ref && !mirror) lost = true;
+	return lost; 
+}
+
 // ReflectPhoton function reverses the direction of the photon hitting an edge.
 void ReflectPhoton(double *p, double &pDirX, double &pDirY,double *wlsL, Shape shape){
 
@@ -230,7 +318,7 @@ void ReflectPhoton(double *p, double &pDirX, double &pDirY,double *wlsL, Shape s
 
 int main(){
 	bool verbosity = false;
-	int numBounce = 2; // Maximum number of bounces of light to trace
+	int numBounce = 7; // Maximum number of bounces of light to trace
 	int numPhots = 1000000; // Number of photons to generate 
 	int seed = 12345; // Seed for random generator
 	float increment = 0.1; // Value to increment the steps of the photon
@@ -242,19 +330,21 @@ int main(){
 	Shape WLSShape = Square;
 //	Shape WLSShape = Rectangle;
 //	Shape WLSShape = Circle;
-	double WLSLength[2] = {28.0,28.0}; // cm. // Square each component is a full length
+	double WLSLength[2] = {23.0,23.0}; // cm. // Square each component is a full length
 //	double WLSLength[2] = {20.0,30.0}; // cm. // Rectangle x,y component are full lengths
 //	double WLSLength[2] = {14.0,14.0}; // cm. // Circle each component is the radius
 
 	double WLSThickness = 0; // Not used yet (2D approximation)
-	double WLSRefractiveIndex = 1.58; // Not used yet 
+	double WLSRefractiveIndex = 1.58;  
+//	double criticalAngle = asin(1.33/WLSRefractiveIndex); // if in water
+	double criticalAngle = asin(1./WLSRefractiveIndex); // if in air
 
 	// PMT properties
 	double PMTRadius = 3.8; // cm.
 
 	// Efficiencies for model
 	double WLSEfficiency = 1; 
-	double WLSReflection = 1; 
+	double WLSReflection = 0; 
 
 
 
@@ -269,6 +359,7 @@ int main(){
        double initDirY = 0;
        int hPMT = 0;
        int reflect = 0;
+	int status = -1;
 
 
 
@@ -282,6 +373,7 @@ int main(){
        tree->Branch("dirTheta", &photDirTheta, "dirTheta/D");
        tree->Branch("hitPMT", &hPMT, "hitPMT/I");
        tree->Branch("reflections", &reflect, "reflections/I");
+       tree->Branch("status", &status, "status/I");
 
 
 	if (verbosity){
@@ -466,6 +558,7 @@ int main(){
 		double photonPosTemp[3] = {photPosX, photPosY,photDirTheta};
 		bool hitPMT = false; 
 		bool circleEdge = false; 
+		bool lost = false;
 		hPMT = 0;
 		reflect = 0;
 		
@@ -474,7 +567,7 @@ int main(){
 			std::cout << "Pos: " << photonPosTemp[0] << " " << photonPosTemp[1] << std::endl;
 		}
 
-		while (!hitPMT && reflect <= numBounce ){
+		while (!hitPMT && reflect <= numBounce && !lost ){
 		
 			// Move the photon
 	//		photonPosTemp[0] += increment*photPosX;
@@ -494,15 +587,20 @@ int main(){
 
 			}
 			if (circleEdge || HitEdge(photonPosTemp, WLSLength, WLSShape)) {
-				ReflectPhoton(photonPosTemp, photDirX, photDirY, WLSLength, WLSShape);
-				reflect++;
+//				ReflectPhoton(photonPosTemp, photDirX, photDirY, WLSLength, WLSShape);
+				lost = ReflectPhoton(photonPosTemp, photDirX, photDirY, WLSLength, WLSShape, criticalAngle, WLSReflection);
+				if (!lost) {
+					reflect++;
+					status = 1;
+				}
+
 				if (verbosity){
 					std::cout << "Edge Hit" << std::endl;
 				
 				}
 			}
 
-		
+		if (hitPMT) {status = 0;}
 		
 		}
 		
@@ -517,7 +615,7 @@ int main(){
 		photon.Theta = AngFromCenter(photPosX, photPosY); // Photon angle from center
 		photon.hitPMT = hitPMT;
 		photon.numBounces = reflect;
-		
+		photon.status = status;
 		PhotonVector.push_back(photon);	
 //		std::cout << initDirX << "\t" << initDirY << std::endl;
 		
@@ -536,10 +634,20 @@ int main(){
 	TH1D *radiusCapture0 = new TH1D("radiusCapture0", "radiusCapture0", nBin, 0, WLSLength[0]); // captured photons without bouncing
 	TH1D *radiusCapture1 = new TH1D("radiusCapture1", "radiusCapture1", nBin, 0, WLSLength[0]); // captured photons bouncing 1 time
 	TH1D *radiusCapture2 = new TH1D("radiusCapture2", "radiusCapture2", nBin, 0, WLSLength[0]); // captured photons bouncing two times
+	TH1D *radiusCapture3 = new TH1D("radiusCapture3", "radiusCapture3", nBin, 0, WLSLength[0]); // captured photons bouncing 3 times
+	TH1D *radiusCapture4 = new TH1D("radiusCapture4", "radiusCapture4", nBin, 0, WLSLength[0]); // captured photons bouncing 4 times
+	TH1D *radiusCapture5 = new TH1D("radiusCapture5", "radiusCapture5", nBin, 0, WLSLength[0]); // captured photons bouncing 5 times
+	TH1D *radiusCapture6 = new TH1D("radiusCapture6", "radiusCapture6", nBin, 0, WLSLength[0]); // captured photons bouncing 6 times
+	TH1D *radiusCapture7 = new TH1D("radiusCapture7", "radiusCapture7", nBin, 0, WLSLength[0]); // captured photons bouncing 7 times
 	TH1D *radiusCaptureR = new TH1D("radiusCaptureR", "radiusCaptureR", nBin, 0, WLSLength[0]); // captured photons plotted by radius
 	TH1D *radiusCapture0R = new TH1D("radiusCapture0R", "radiusCapture0R", nBin, 0, WLSLength[0]); // captured photons without bouncing
 	TH1D *radiusCapture1R = new TH1D("radiusCapture1R", "radiusCapture1R", nBin, 0, WLSLength[0]); // captured photons bouncing 1 time
-	TH1D *radiusCapture2R = new TH1D("radiusCapture2R", "radiusCapture2R", nBin, 0, WLSLength[0]); // captured photons bouncing two times
+	TH1D *radiusCapture2R = new TH1D("radiusCapture2R", "radiusCapture2R", nBin, 0, WLSLength[0]); // captured photons bouncing 2 times
+	TH1D *radiusCapture3R = new TH1D("radiusCapture3R", "radiusCapture3R", nBin, 0, WLSLength[0]); // captured photons bouncing 3 times
+	TH1D *radiusCapture4R = new TH1D("radiusCapture4R", "radiusCapture4R", nBin, 0, WLSLength[0]); // captured photons bouncing 4 times
+	TH1D *radiusCapture5R = new TH1D("radiusCapture5R", "radiusCapture5R", nBin, 0, WLSLength[0]); // captured photons bouncing 5 times
+	TH1D *radiusCapture6R = new TH1D("radiusCapture6R", "radiusCapture6R", nBin, 0, WLSLength[0]); // captured photons bouncing 6 times
+	TH1D *radiusCapture7R = new TH1D("radiusCapture7R", "radiusCapture7R", nBin, 0, WLSLength[0]); // captured photons bouncing 7 times
 	
 	TH2D *generatedPosCart = new TH2D("generatedPosCart", "generatedPosCart", nBin, -WLSLength[0]/2, WLSLength[0]/2, nBin, -WLSLength[0]/2, WLSLength[0]/2); // mapping of plate
 	TH2D *generatedDirCart = new TH2D("generatedDirCart", "generatedDirCart", nBin, -WLSLength[0]/2, WLSLength[0]/2, nBin, -WLSLength[0]/2, WLSLength[0]/2); // mapping of plate
@@ -553,10 +661,20 @@ int main(){
         radiusCapture0->Sumw2();
         radiusCapture1->Sumw2();
         radiusCapture2->Sumw2();
+        radiusCapture3->Sumw2();
+        radiusCapture4->Sumw2();
+        radiusCapture5->Sumw2();
+        radiusCapture6->Sumw2();
+        radiusCapture7->Sumw2();
         radiusCaptureR->Sumw2();
         radiusCapture0R->Sumw2();
         radiusCapture1R->Sumw2();
         radiusCapture2R->Sumw2();
+        radiusCapture3R->Sumw2();
+        radiusCapture4R->Sumw2();
+        radiusCapture5R->Sumw2();
+        radiusCapture6R->Sumw2();
+        radiusCapture7R->Sumw2();
         captureMap->Sumw2();
         generatedPosCart->Sumw2();
         generatedDirCart->Sumw2();
@@ -576,6 +694,11 @@ int main(){
 			if (PhotonVector[i].numBounces == 0) {radiusCapture0->Fill(PhotonVector[i].R);}		
 			if (PhotonVector[i].numBounces == 1) {radiusCapture1->Fill(PhotonVector[i].R);}		
 			if (PhotonVector[i].numBounces == 2) {radiusCapture2->Fill(PhotonVector[i].R);}		
+			if (PhotonVector[i].numBounces == 3) {radiusCapture3->Fill(PhotonVector[i].R);}		
+			if (PhotonVector[i].numBounces == 4) {radiusCapture4->Fill(PhotonVector[i].R);}		
+			if (PhotonVector[i].numBounces == 5) {radiusCapture5->Fill(PhotonVector[i].R);}		
+			if (PhotonVector[i].numBounces == 6) {radiusCapture6->Fill(PhotonVector[i].R);}		
+			if (PhotonVector[i].numBounces == 7) {radiusCapture7->Fill(PhotonVector[i].R);}		
 		
 			captureMap->Fill(PhotonVector[i].Theta, PhotonVector[i].R);
 			captureMapCart->Fill(PhotonVector[i].Pos[0], PhotonVector[i].Pos[1]);
@@ -598,6 +721,16 @@ int main(){
                 radiusCapture1R->SetBinError(i,radiusCapture1->GetBinError(i)/normVal);
                 radiusCapture2R->SetBinContent(i,radiusCapture2->GetBinContent(i)/normVal);
                 radiusCapture2R->SetBinError(i,radiusCapture2->GetBinError(i)/normVal);
+                radiusCapture3R->SetBinContent(i,radiusCapture3->GetBinContent(i)/normVal);
+                radiusCapture3R->SetBinError(i,radiusCapture3->GetBinError(i)/normVal);
+                radiusCapture4R->SetBinContent(i,radiusCapture4->GetBinContent(i)/normVal);
+                radiusCapture4R->SetBinError(i,radiusCapture4->GetBinError(i)/normVal);
+                radiusCapture5R->SetBinContent(i,radiusCapture5->GetBinContent(i)/normVal);
+                radiusCapture5R->SetBinError(i,radiusCapture5->GetBinError(i)/normVal);
+                radiusCapture6R->SetBinContent(i,radiusCapture6->GetBinContent(i)/normVal);
+                radiusCapture6R->SetBinError(i,radiusCapture6->GetBinError(i)/normVal);
+                radiusCapture7R->SetBinContent(i,radiusCapture7->GetBinContent(i)/normVal);
+                radiusCapture7R->SetBinError(i,radiusCapture7->GetBinError(i)/normVal);
 	
 //	std::cout << "Bin:\t" << i << "\t" << radiusCapture2->GetBinContent(i) << "\t" << radiusHist->GetBinContent(i)<< "\t" <<radiusCapture2->GetBinContent(i)/radiusHist->GetBinContent(i) << std::endl;  	
 	}
@@ -608,10 +741,20 @@ int main(){
 	radiusCapture0->Write();
 	radiusCapture1->Write();
 	radiusCapture2->Write();
+	radiusCapture3->Write();
+	radiusCapture4->Write();
+	radiusCapture5->Write();
+	radiusCapture6->Write();
+	radiusCapture7->Write();
 	radiusCaptureR->Write();
 	radiusCapture0R->Write();
 	radiusCapture1R->Write();
 	radiusCapture2R->Write();
+	radiusCapture3R->Write();
+	radiusCapture4R->Write();
+	radiusCapture5R->Write();
+	radiusCapture6R->Write();
+	radiusCapture7R->Write();
 	captureMap->Write();
 	generatedPosCart->Write();
 	generatedDirCart->Write();

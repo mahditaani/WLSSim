@@ -38,6 +38,18 @@ enum Shape {
 	Rectangle
 }; // Enumeration to hold the different WLS shapes
 
+> // A function to keep all angle ranges between 0 and 2PI
+double Angle(double x){
+	while (x >= 2*PI){
+	x -= 2*PI;
+	}
+
+	while (x < 0){
+	x += 2*PI;
+	}
+	return x;
+}
+
 // A function to figure out the angle from the center
 double AngFromCenter(double x, double y){
 	double ang = 0; 
@@ -46,7 +58,7 @@ double AngFromCenter(double x, double y){
 	if (x > 0 && y < 0) {ang = 2*PI - ang; } // bottom right
 //	if (x > 0 && y > 0) {} // top right
 	if (x < 0 && y > 0) {ang = PI - ang;} // top left
-	return ang;
+	return Angle(ang);
 }
 
 // A function to rotate cartesian coordinated by theta
@@ -66,7 +78,9 @@ void PropagatePhoton(double *p, float i, double pDirX, double pDirY, double *wls
 	double ang = asin(pmtR/r); // angle of acceptance above or below the direct angle
 //	double directAng = atan(p[0]/p[1]); // direct angle from position to center of PMT.
 //	double travelAng = atan(pDirX/pDirY); // The angle of travel.
-	double directAng = atan(abs(p[0])/abs(p[1])); // direct angle from position to center of PMT.
+	double yTMP; // This value is used to get the correct angle in cases where y = 0;
+	if (p[1] == 0){yTMP = 0.0000001;} else {yTMP = abs(p[1]);}
+	double directAng = Angle(atan(abs(p[0])/yTMP)); // direct angle from position to center of PMT.
 	double travelAng = p[2] ;// The angle of travel.
 /*
 	//if (p[0] < 0 && p[1] < 0) {directAng = directAng; travelAng = travelAng;} // nothing changes // bottom left
@@ -75,9 +89,12 @@ void PropagatePhoton(double *p, float i, double pDirX, double pDirY, double *wls
 	if (p[0] < 0 && p[1] > 0) {directAng += 3*PI/4; travelAng += 3*PI/4;} // top left
 */
 	if (p[0] < 0 && p[1] < 0) {directAng = PI/2 - directAng;} // nothing changes // bottom left
-	if (p[0] > 0 && p[1] < 0) {directAng += PI/2; } // bottom right
-	if (p[0] > 0 && p[1] > 0) {directAng = 3*PI/2 - directAng;} // top right
+	if (p[0] >= 0 && p[1] < 0) {directAng += PI/2; } // bottom right
+	if (p[0] >= 0 && p[1] > 0) {directAng = 3*PI/2 - directAng;} // top right
 	if (p[0] < 0 && p[1] > 0) {directAng += 3*PI/2;} // top left
+
+	if (p[0] < 0 && p[1] ==0){directAng = 0;}
+	if (p[0] > 0 && p[1] ==0){directAng = PI;}
 
 	// DEBUG
 //	std::cout << "Ang, DirectAng, travel " << ang << " " << directAng << " " << travelAng << std::endl;
@@ -182,27 +199,30 @@ bool ReflectPhoton(double *p, double &pDirX, double &pDirY,double *wlsL, Shape s
 	bool mirror = false;
 	bool lost = false;
 
+	p[2] = Angle(p[2]); // Make sure angle is in correct range
+
 //	std::cout << "ref, mirror " << ref << " " << mirror << std::endl; //DEBUG
 	// Ensures that total internal reflection is treated separately from the reflective additions
 	if (shape == Square || shape == Rectangle){	
 		if (p[0] == -wlsL[0]/2){ 
-			if (p[2] >= PI + crit || p[2] <= PI - crit){ref = true;}
+			if ( (p[2] >= PI + crit && p[2] <= 3*PI/2) || ( p[2] >= PI/2 && p[2] <= PI - crit ) ){ref = true;}
 		}
 		if (p[0] == wlsL[0]/2){
-			if (p[2] <= 2*PI -crit || p[2] >= crit){ref = true;}
+			if ( (p[2] >= crit && p[2] <= PI/2) || (p[2] >= 3*PI/2 && p[2] <= 2*PI - crit ) ){ref = true;}
 		}
 		if (p[1] == -wlsL[1]/2){
-			if (p[2] <= 3*PI/2 - crit || p[2] >= 3*PI/2 + crit){ref = true;}
+			if ( (p[2] >= PI && p[2] <= 3*PI/2 -crit ) || ( p[2] >= 3*PI/2 + crit && p[2] <= 0 ) ){ref = true;} // used 0 instead of 2 pi here
 		}
 		if (p[1] == wlsL[1]/2){
-			if (p[2] <= PI/2 - crit || p[2] >= PI/2 + crit) {ref = true;}
+			if ( ( p[2] >= 0 && p[2] <= PI/2 - crit) || ( p[2] >= PI/2 + crit && p[2] <= PI) ) {ref = true;}
 		}
 //	std::cout << "P0, p1, p2, crit " << p[0] << ", " << p[1] << ", " << p[2]*180/PI << ", " << crit*180/PI<< std::endl; //DEBUG
 	}
 	
-	if (!ref) {
-		if (reflect(gen) <= reflectivity) mirror = true;
-	}
+//	if (!ref) {
+//		if (reflect(gen) <= reflectivity) mirror = true;
+//	}
+
 //	std::cout << "ref, mirror " << ref << " " << mirror << std::endl; //DEBUG
 	// work out new direction components
 	if ( (shape == Square || shape == Rectangle) && (ref || mirror)){	
@@ -231,7 +251,7 @@ bool ReflectPhoton(double *p, double &pDirX, double &pDirY,double *wlsL, Shape s
 
 		double posTemp[2] = {p[0],p[1]}; // store the direction temporarily
 		double dirTemp[2] = {pDirX,pDirY}; // store the direction temporarily
-		double angle = AngFromCenter(p[0],p[1]); // Gives the angle of rotation to get the tangent
+		double angle = Angle(AngFromCenter(p[0],p[1])); // Gives the angle of rotation to get the tangent
 		
 		// Rotate the coordinates for simple calculations
 		Rotate(posTemp, angle);	
@@ -260,6 +280,8 @@ bool ReflectPhoton(double *p, double &pDirX, double &pDirY,double *wlsL, Shape s
 
 // ReflectPhoton function reverses the direction of the photon hitting an edge.
 void ReflectPhoton(double *p, double &pDirX, double &pDirY,double *wlsL, Shape shape){
+
+	p[2] = Angle(p[2]); // make sure angle is in the correct range
 
 	// work out new direction components
 	if (shape == Square || shape == Rectangle){	
@@ -344,7 +366,7 @@ int main(){
 
 	// Efficiencies for model
 	double WLSEfficiency = 1; 
-	double WLSReflection = 0; 
+	double WLSReflection = 1; 
 
 
 

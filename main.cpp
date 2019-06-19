@@ -22,7 +22,7 @@ std::uniform_real_distribution<double> reflect(0.,1.);
 
 
 typedef struct {
-	
+
 	double Pos[2] = {0,0}; // Photon position
 	double Dir[3] = {0,0,0}; // Photon direction
 	double R = 0; // Photon distance from center
@@ -33,12 +33,12 @@ typedef struct {
 } Phot ; // Structure to hold the information about the photons
 
 enum Shape {
-	Circle, 
-	Square, 
+	Circle,
+	Square,
 	Rectangle
 }; // Enumeration to hold the different WLS shapes
 
-> // A function to keep all angle ranges between 0 and 2PI
+// A function to keep all angle ranges between 0 and 2PI
 double Angle(double x){
 	while (x >= 2*PI){
 	x -= 2*PI;
@@ -52,7 +52,7 @@ double Angle(double x){
 
 // A function to figure out the angle from the center
 double AngFromCenter(double x, double y){
-	double ang = 0; 
+	double ang = 0;
 	ang = atan(abs(y)/abs(x));
 	if (x < 0 && y < 0) {ang = PI + ang;} // nothing changes // bottom left
 	if (x > 0 && y < 0) {ang = 2*PI - ang; } // bottom right
@@ -110,25 +110,25 @@ void PropagatePhoton(double *p, float i, double pDirX, double pDirY, double *wls
 	// If the plate is a Square or a Rectangle
 	if (shape == Square || shape == Rectangle){
 		if (p[0] > wlsL[0]/2) { // The photon has moved outside the plate, let's bring it to the edge
-			double diffX = p[0] - wlsL[0]/2; 
+			double diffX = p[0] - wlsL[0]/2;
 			double diffI = diffX/pDirX; // Gives the difference as a measure of the x component increment
 			p[0] -= diffI*pDirX;
 			p[1] -= diffI*pDirY;
 		}
 		if (p[0] < -wlsL[0]/2) { // The photon has moved outside the plate, let's bring it to the edge
-			double diffX = p[0] + wlsL[0]/2; 
+			double diffX = p[0] + wlsL[0]/2;
 			double diffI = diffX/pDirX; // Gives the difference as a measure of the x component increment
 			p[0] -= diffI*pDirX;
 			p[1] -= diffI*pDirY;
 		}
 		if (p[1] > wlsL[1]/2) { // The photon has moved outside the plate, let's bring it to the edge
-			double diffY = p[1] - wlsL[1]/2; 
+			double diffY = p[1] - wlsL[1]/2;
 			double diffI = diffY/pDirY; // Gives the difference as a measure of the y component increment
 			p[0] -= diffI*pDirX;
 			p[1] -= diffI*pDirY;
 		}
 		if (p[1] < -wlsL[1]/2) { // The photon has moved outside the plate, let's bring it to the edge
-			double diffY = p[1] + wlsL[1]/2; 
+			double diffY = p[1] + wlsL[1]/2;
 			double diffI = diffY/pDirY; // Gives the difference as a measure of the y component increment
 			p[0] -= diffI*pDirX;
 			p[1] -= diffI*pDirY;
@@ -140,34 +140,34 @@ void PropagatePhoton(double *p, float i, double pDirX, double pDirY, double *wls
 		int selectedX = 0; // This values will determine which quadratic solution is chosen
 		double distTo0 = 0; // This shows how far the current point is to the first quadratic solution
 		double distTo1 = 0; // This shows how far the current point is to the second quadratic solution
-		
+
 		if (r > wlsL[0]) { // The photon has moved outside the plate, let's bring it to the edge
 			double potX[2] = {-wlsL[0],wlsL[0]}; // stores the two x Values for the quadratic solution
 
 			double m =pDirY/pDirX ; // gradient of photon path
 			double c = p[1] - m*p[0]; // y intercept of photon path
-	
-			potX[0] = ( (-m*c) + sqrt(( (pow(m,2)+1)*pow(wlsL[0],2) ) - pow(c,2) ) ) /(pow(m,2) +1 ); 
+
+			potX[0] = ( (-m*c) + sqrt(( (pow(m,2)+1)*pow(wlsL[0],2) ) - pow(c,2) ) ) /(pow(m,2) +1 );
 			potX[1] = ( (-m*c) - sqrt(( (pow(m,2)+1)*pow(wlsL[0],2) ) - pow(c,2) ) ) /(pow(m,2) +1 );
- 			
-			distTo0 = abs(p[0] - potX[0]); 
-			distTo1 = abs(p[0] - potX[1]); 
-			
+
+			distTo0 = abs(p[0] - potX[0]);
+			distTo1 = abs(p[0] - potX[1]);
+
 			if (distTo1 < distTo0 ) selectedX = 1;
 
 			double diffX = p[0] - potX[selectedX];
 			double diffI = diffX/pDirX;
 			p[0] -= diffI*pDirX;
-			p[1] -= diffI*pDirY; 
-			
-			
-			
-	
+			p[1] -= diffI*pDirY;
+
+
+
+
 		}
 
 
 	}
-	
+
 
 }
 
@@ -183,12 +183,12 @@ bool HitPMT(double *p, double pmtR){
 bool HitEdge(double *p, double *wlsL, Shape shape){
 
 	double r = sqrt(pow(p[0],2) + pow(p[1],2) );
-	
 
-	if ( ( shape == Square || shape == Rectangle) && (p[0] == -wlsL[0]/2 || p[0] == wlsL[0]/2 || p[1] == -wlsL[1]/2 || p[1] == wlsL[1]/2) ) return true; 
+
+	if ( ( shape == Square || shape == Rectangle) && (p[0] == -wlsL[0]/2 || p[0] == wlsL[0]/2 || p[1] == -wlsL[1]/2 || p[1] == wlsL[1]/2) ) return true;
 	else if ( shape == Circle && r == wlsL[0] ) return true;
 	else return false;
-	
+
 
 }
 
@@ -203,8 +203,8 @@ bool ReflectPhoton(double *p, double &pDirX, double &pDirY,double *wlsL, Shape s
 
 //	std::cout << "ref, mirror " << ref << " " << mirror << std::endl; //DEBUG
 	// Ensures that total internal reflection is treated separately from the reflective additions
-	if (shape == Square || shape == Rectangle){	
-		if (p[0] == -wlsL[0]/2){ 
+	if (shape == Square || shape == Rectangle){
+		if (p[0] == -wlsL[0]/2){
 			if ( (p[2] >= PI + crit && p[2] <= 3*PI/2) || ( p[2] >= PI/2 && p[2] <= PI - crit ) ){ref = true;}
 		}
 		if (p[0] == wlsL[0]/2){
@@ -218,15 +218,15 @@ bool ReflectPhoton(double *p, double &pDirX, double &pDirY,double *wlsL, Shape s
 		}
 //	std::cout << "P0, p1, p2, crit " << p[0] << ", " << p[1] << ", " << p[2]*180/PI << ", " << crit*180/PI<< std::endl; //DEBUG
 	}
-	
+
 //	if (!ref) {
 //		if (reflect(gen) <= reflectivity) mirror = true;
 //	}
 
 //	std::cout << "ref, mirror " << ref << " " << mirror << std::endl; //DEBUG
 	// work out new direction components
-	if ( (shape == Square || shape == Rectangle) && (ref || mirror)){	
-		if (p[0] == -wlsL[0]/2){ 
+	if ( (shape == Square || shape == Rectangle) && (ref || mirror)){
+		if (p[0] == -wlsL[0]/2){
 			pDirX*=-1;
 		}
 		if (p[0] == wlsL[0]/2){
@@ -238,10 +238,10 @@ bool ReflectPhoton(double *p, double &pDirX, double &pDirY,double *wlsL, Shape s
 		if (p[1] == wlsL[1]/2){
 			pDirY*=-1;
 		}
-		
+
 		// work out new travelling angle
 		p[2] = acos(pDirX);
-		
+
 		if (pDirY < 0){
 			p[2] = 2*PI - p[2];
 		}
@@ -252,30 +252,30 @@ bool ReflectPhoton(double *p, double &pDirX, double &pDirY,double *wlsL, Shape s
 		double posTemp[2] = {p[0],p[1]}; // store the direction temporarily
 		double dirTemp[2] = {pDirX,pDirY}; // store the direction temporarily
 		double angle = Angle(AngFromCenter(p[0],p[1])); // Gives the angle of rotation to get the tangent
-		
+
 		// Rotate the coordinates for simple calculations
-		Rotate(posTemp, angle);	
-		Rotate(dirTemp, angle);	
-		
+		Rotate(posTemp, angle);
+		Rotate(dirTemp, angle);
+
 		dirTemp[0] *= -1; // flip the x' direction
 		Rotate(dirTemp, (2*PI-angle)	); // Rotate back the direction coordinates
 
 		pDirX = dirTemp[0];
 		pDirY = dirTemp[1];
-		
+
 		// work out new travelling angle
 		p[2] = acos(pDirX);
-		
+
 		if (pDirY < 0){
 			p[2] = 2*PI - p[2];
 		}
-		
+
 
 
 	}
-	
+
 	if (!ref && !mirror) lost = true;
-	return lost; 
+	return lost;
 }
 
 // ReflectPhoton function reverses the direction of the photon hitting an edge.
@@ -284,8 +284,8 @@ void ReflectPhoton(double *p, double &pDirX, double &pDirY,double *wlsL, Shape s
 	p[2] = Angle(p[2]); // make sure angle is in the correct range
 
 	// work out new direction components
-	if (shape == Square || shape == Rectangle){	
-		if (p[0] == -wlsL[0]/2){ 
+	if (shape == Square || shape == Rectangle){
+		if (p[0] == -wlsL[0]/2){
 			pDirX*=-1;
 		}
 		if (p[0] == wlsL[0]/2){
@@ -297,10 +297,10 @@ void ReflectPhoton(double *p, double &pDirX, double &pDirY,double *wlsL, Shape s
 		if (p[1] == wlsL[1]/2){
 			pDirY*=-1;
 		}
-		
+
 		// work out new travelling angle
 		p[2] = acos(pDirX);
-		
+
 		if (pDirY < 0){
 			p[2] = 2*PI - p[2];
 		}
@@ -311,28 +311,28 @@ void ReflectPhoton(double *p, double &pDirX, double &pDirY,double *wlsL, Shape s
 		double posTemp[2] = {p[0],p[1]}; // store the direction temporarily
 		double dirTemp[2] = {pDirX,pDirY}; // store the direction temporarily
 		double angle = AngFromCenter(p[0],p[1]); // Gives the angle of rotation to get the tangent
-		
+
 		// Rotate the coordinates for simple calculations
-		Rotate(posTemp, angle);	
-		Rotate(dirTemp, angle);	
-		
+		Rotate(posTemp, angle);
+		Rotate(dirTemp, angle);
+
 		dirTemp[0] *= -1; // flip the x' direction
 		Rotate(dirTemp, (2*PI-angle)	); // Rotate back the direction coordinates
 
 		pDirX = dirTemp[0];
 		pDirY = dirTemp[1];
-		
+
 		// work out new travelling angle
 		p[2] = acos(pDirX);
-		
+
 		if (pDirY < 0){
 			p[2] = 2*PI - p[2];
 		}
-		
+
 
 
 	}
-	
+
 }
 
 
@@ -341,14 +341,14 @@ void ReflectPhoton(double *p, double &pDirX, double &pDirY,double *wlsL, Shape s
 int main(){
 	bool verbosity = false;
 	int numBounce = 7; // Maximum number of bounces of light to trace
-	int numPhots = 1000000; // Number of photons to generate 
+	int numPhots = 1000000; // Number of photons to generate
 	int seed = 12345; // Seed for random generator
 	float increment = 0.1; // Value to increment the steps of the photon
 
 	int nBin = 56;
 
 	// WLS properties
-	
+
 	Shape WLSShape = Square;
 //	Shape WLSShape = Rectangle;
 //	Shape WLSShape = Circle;
@@ -357,7 +357,7 @@ int main(){
 //	double WLSLength[2] = {14.0,14.0}; // cm. // Circle each component is the radius
 
 	double WLSThickness = 0; // Not used yet (2D approximation)
-	double WLSRefractiveIndex = 1.58;  
+	double WLSRefractiveIndex = 1.58;
 //	double criticalAngle = asin(1.33/WLSRefractiveIndex); // if in water
 	double criticalAngle = asin(1./WLSRefractiveIndex); // if in air
 
@@ -365,8 +365,8 @@ int main(){
 	double PMTRadius = 3.8; // cm.
 
 	// Efficiencies for model
-	double WLSEfficiency = 1; 
-	double WLSReflection = 1; 
+	double WLSEfficiency = 1;
+	double WLSReflection = 1;
 
 
 
@@ -399,7 +399,7 @@ int main(){
 
 
 	if (verbosity){
-	
+
 		std::cout << "--------------------------------------" << std::endl;
 		std::cout << "------------SETTINGS------------------" << std::endl;
 		std::cout << "--------------------------------------" << std::endl;
@@ -422,13 +422,13 @@ int main(){
 		std::cout << "PMT Radius:\t"<< PMTRadius << std::endl;
 		std::cout << "--------------------------------------" << std::endl;
 		std::cout << "--------------------------------------" << std::endl;
-	
 
 
-	
+
+
 	}
 
-	
+
 	std::vector<Phot> PhotonVector;
 	// Generate a point in the WLS
 
@@ -450,7 +450,7 @@ int main(){
 	distributionDir = std::uniform_real_distribution<double> (0.0,2*PI);
 	}
 	if (WLSShape == Circle){
-	distributionPosR = std::uniform_real_distribution<double> (pow(PMTRadius,2),pow(WLSLength[0],2)); 
+	distributionPosR = std::uniform_real_distribution<double> (pow(PMTRadius,2),pow(WLSLength[0],2));
 	distributionDir = std::uniform_real_distribution<double> (0.0,2*PI);
 	}
 
@@ -474,7 +474,7 @@ int main(){
 	}
 */
 //--------------------------------------Start of LOOP---------------------------------------------------------------
-	for (int i = 0; i <numPhots; i++){	
+	for (int i = 0; i <numPhots; i++){
         	if (i % 1000 == 0){std::cout << "Generating Photon: " << i << std::endl;}
 		photPosX = 0;
 		photPosY = 0;
@@ -484,30 +484,30 @@ int main(){
 		photDirY = 0;
 		initDirX = 0;
 		initDirY = 0;
-		bool inPlate = false;	
-		
+		bool inPlate = false;
+
 		if (WLSShape == Square){
 			while (!inPlate) {
 				// Across the whole plate
 				photPosX = distributionPos(generator);
 				photPosY = distributionPos(generator);
-				// On axis 
-				//photPosX = 0; 
+				// On axis
+				//photPosX = 0;
 				//photPosY = distributionPos(generator);
 				photPosR = sqrt( pow(photPosX,2) + pow(photPosY,2) );
-				
+
 				if (verbosity){
 					std::cout << "Generated a point (x y):\t" << photPosX << " " << photPosY << std::endl;
-				
+
 				}
 
 				if (photPosR > PMTRadius ) {
-						
+
 					inPlate = true;
-				
+
 				} else if (verbosity){
-					std::cout << "Generated point was inside PMT. Generating a new point." << std::endl;		
-				
+					std::cout << "Generated point was inside PMT. Generating a new point." << std::endl;
+
 				}
 			}
 		}
@@ -516,23 +516,23 @@ int main(){
 				// Across the whole plate
 				photPosX = distributionPosX(generator);
 				photPosY = distributionPosY(generator);
-				// On axis 
-				//photPosX = 0; 
+				// On axis
+				//photPosX = 0;
 				//photPosY = distributionPos(generator);
 				photPosR = sqrt( pow(photPosX,2) + pow(photPosY,2) );
-				
+
 				if (verbosity){
 					std::cout << "Generated a point (x y):\t" << photPosX << " " << photPosY << std::endl;
-				
+
 				}
 
 				if (photPosR > PMTRadius ) {
-						
+
 					inPlate = true;
-				
+
 				} else if (verbosity){
-					std::cout << "Generated point was inside PMT. Generating a new point." << std::endl;		
-				
+					std::cout << "Generated point was inside PMT. Generating a new point." << std::endl;
+
 				}
 			}
 		}
@@ -544,24 +544,24 @@ int main(){
 				double genTheta = distributionDir(generator);
 				photPosX = sqrt(genR)*cos(genTheta);
 				photPosY = sqrt(genR)*sin(genTheta);
-				// On axis 
-				//photPosX = 0; 
+				// On axis
+				//photPosX = 0;
 				//photPosY = distributionPos(generator);
 				photPosR = sqrt( pow(photPosX,2) + pow(photPosY,2) );
-				
+
 				if (verbosity){
 					std::cout << "Generated a point (x y):\t" << photPosX << " " << photPosY << std::endl;
-				
+
 				}
 
-						
+
 					inPlate = true;
-				
+
 			}
 		}
 
-		// Generate a photon direction 
-		
+		// Generate a photon direction
+
 //		double photDirTheta = 2*PI*distributionDir(generator);
 		photDirTheta = distributionDir(generator);
 		photDirX = cos(photDirTheta);
@@ -570,27 +570,27 @@ int main(){
 		initDirY = photDirY;
 
 		if (verbosity){
-		
+
 			std::cout << "Generated a photon direction (theta x y):\t" << photDirTheta << " " << photDirX << " "<< photDirY << std::endl;
-		
+
 		}
 
 		// Trace photon for numBounce bounces and see if it reaches the PMT
 		// Keep track of the number of bounces
 		double photonPosTemp[3] = {photPosX, photPosY,photDirTheta};
-		bool hitPMT = false; 
-		bool circleEdge = false; 
+		bool hitPMT = false;
+		bool circleEdge = false;
 		bool lost = false;
 		hPMT = 0;
 		reflect = 0;
-		
+
 		if (verbosity){
 			std::cout << "Propagating photon: " << i << std::endl;
 			std::cout << "Pos: " << photonPosTemp[0] << " " << photonPosTemp[1] << std::endl;
 		}
 
 		while (!hitPMT && reflect <= numBounce && !lost ){
-		
+
 			// Move the photon
 	//		photonPosTemp[0] += increment*photPosX;
 	//		photonPosTemp[1] += increment*photPosY;
@@ -601,10 +601,10 @@ int main(){
 
 			if (HitPMT(photonPosTemp, PMTRadius)) {
 				hitPMT = true;
-				hPMT = 1;		
+				hPMT = 1;
 				if (verbosity){
 					std::cout << "PMT Hit" << std::endl;
-				
+
 				}
 
 			}
@@ -618,15 +618,15 @@ int main(){
 
 				if (verbosity){
 					std::cout << "Edge Hit" << std::endl;
-				
+
 				}
 			}
 
 		if (hitPMT) {status = 0;}
-		
+
 		}
-		
-		Phot photon;	
+
+		Phot photon;
 		photon.Pos[0] = photPosX;
 		photon.Pos[1] = photPosY;
 		photon.Dir[0] = initDirX;
@@ -638,9 +638,9 @@ int main(){
 		photon.hitPMT = hitPMT;
 		photon.numBounces = reflect;
 		photon.status = status;
-		PhotonVector.push_back(photon);	
+		PhotonVector.push_back(photon);
 //		std::cout << initDirX << "\t" << initDirY << std::endl;
-		
+
 		// Save output to ROOT file
 		tree->Fill();
 	}
@@ -648,7 +648,7 @@ int main(){
 
 
 
-	
+
 	// Histograms
 	TH1D *generatedTheta = new TH1D("generatedTheta", "generatedTheta", nBin, 0, 2*PI); // captured photons plotted by radius
 	TH1D *radiusHist = new TH1D("radiusHist", "radiusHist", nBin, 0, WLSLength[0]); // captured photons plotted by radius
@@ -670,7 +670,7 @@ int main(){
 	TH1D *radiusCapture5R = new TH1D("radiusCapture5R", "radiusCapture5R", nBin, 0, WLSLength[0]); // captured photons bouncing 5 times
 	TH1D *radiusCapture6R = new TH1D("radiusCapture6R", "radiusCapture6R", nBin, 0, WLSLength[0]); // captured photons bouncing 6 times
 	TH1D *radiusCapture7R = new TH1D("radiusCapture7R", "radiusCapture7R", nBin, 0, WLSLength[0]); // captured photons bouncing 7 times
-	
+
 	TH2D *generatedPosCart = new TH2D("generatedPosCart", "generatedPosCart", nBin, -WLSLength[0]/2, WLSLength[0]/2, nBin, -WLSLength[0]/2, WLSLength[0]/2); // mapping of plate
 	TH2D *generatedDirCart = new TH2D("generatedDirCart", "generatedDirCart", nBin, -WLSLength[0]/2, WLSLength[0]/2, nBin, -WLSLength[0]/2, WLSLength[0]/2); // mapping of plate
 	TH2D *captureMapCart = new TH2D("captureMapCart", "captureMapCart", nBin, -WLSLength[0]/2, WLSLength[0]/2, nBin, -WLSLength[0]/2, WLSLength[0]/2); // mapping of plate
@@ -710,26 +710,26 @@ int main(){
 		radiusHist->Fill(PhotonVector[i].R);
 
 		if (PhotonVector[i].hitPMT){
-		
+
 			radiusCapture->Fill(PhotonVector[i].R);
-		
-			if (PhotonVector[i].numBounces == 0) {radiusCapture0->Fill(PhotonVector[i].R);}		
-			if (PhotonVector[i].numBounces == 1) {radiusCapture1->Fill(PhotonVector[i].R);}		
-			if (PhotonVector[i].numBounces == 2) {radiusCapture2->Fill(PhotonVector[i].R);}		
-			if (PhotonVector[i].numBounces == 3) {radiusCapture3->Fill(PhotonVector[i].R);}		
-			if (PhotonVector[i].numBounces == 4) {radiusCapture4->Fill(PhotonVector[i].R);}		
-			if (PhotonVector[i].numBounces == 5) {radiusCapture5->Fill(PhotonVector[i].R);}		
-			if (PhotonVector[i].numBounces == 6) {radiusCapture6->Fill(PhotonVector[i].R);}		
-			if (PhotonVector[i].numBounces == 7) {radiusCapture7->Fill(PhotonVector[i].R);}		
-		
+
+			if (PhotonVector[i].numBounces == 0) {radiusCapture0->Fill(PhotonVector[i].R);}
+			if (PhotonVector[i].numBounces == 1) {radiusCapture1->Fill(PhotonVector[i].R);}
+			if (PhotonVector[i].numBounces == 2) {radiusCapture2->Fill(PhotonVector[i].R);}
+			if (PhotonVector[i].numBounces == 3) {radiusCapture3->Fill(PhotonVector[i].R);}
+			if (PhotonVector[i].numBounces == 4) {radiusCapture4->Fill(PhotonVector[i].R);}
+			if (PhotonVector[i].numBounces == 5) {radiusCapture5->Fill(PhotonVector[i].R);}
+			if (PhotonVector[i].numBounces == 6) {radiusCapture6->Fill(PhotonVector[i].R);}
+			if (PhotonVector[i].numBounces == 7) {radiusCapture7->Fill(PhotonVector[i].R);}
+
 			captureMap->Fill(PhotonVector[i].Theta, PhotonVector[i].R);
 			captureMapCart->Fill(PhotonVector[i].Pos[0], PhotonVector[i].Pos[1]);
 		}
-	
 
-	
+
+
 	}
-	
+
 	for (int i = 1; i <= nBin; i++){
 		double normVal = radiusHist->GetBinContent(i);
 		if (normVal ==0) normVal = 1;
@@ -753,8 +753,8 @@ int main(){
                 radiusCapture6R->SetBinError(i,radiusCapture6->GetBinError(i)/normVal);
                 radiusCapture7R->SetBinContent(i,radiusCapture7->GetBinContent(i)/normVal);
                 radiusCapture7R->SetBinError(i,radiusCapture7->GetBinError(i)/normVal);
-	
-//	std::cout << "Bin:\t" << i << "\t" << radiusCapture2->GetBinContent(i) << "\t" << radiusHist->GetBinContent(i)<< "\t" <<radiusCapture2->GetBinContent(i)/radiusHist->GetBinContent(i) << std::endl;  	
+
+//	std::cout << "Bin:\t" << i << "\t" << radiusCapture2->GetBinContent(i) << "\t" << radiusHist->GetBinContent(i)<< "\t" <<radiusCapture2->GetBinContent(i)/radiusHist->GetBinContent(i) << std::endl;
 	}
 
 
@@ -794,12 +794,10 @@ int main(){
 
 
 
-		
+
 	return 0;
 
 
 
 
 } // End of the main function.
-
-

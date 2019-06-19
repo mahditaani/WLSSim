@@ -1,5 +1,6 @@
 // This is a simulation to determine the shape of the WLS efficiency curve.
-
+// coordinate system PMT center is (0,0)
+// angles from 0->2*pi [(1,0) is 0 degrees and it increases anti-clockwise]
 // C++ Includes
 #include <iostream>
 #include <cstdlib>
@@ -51,11 +52,13 @@ double Angle(double x){
 // A function to figure out the angle from the center
 double AngFromCenter(double x, double y){
 	double ang = 0;
-	ang = atan(abs(y)/abs(x));
-	if (x < 0 && y < 0) {ang = PI + ang;} // nothing changes // bottom left
-	if (x > 0 && y < 0) {ang = 2*PI - ang; } // bottom right
-//	if (x > 0 && y > 0) {} // top right
-	if (x < 0 && y > 0) {ang = PI - ang;} // top left
+	ang = atan2(y,x);
+	return Angle(ang);
+}
+// A function to figure out the angle to the center
+double AngToCenter(double x, double y){
+	double ang = 0;
+	ang = atan2(-1*y,-1*x);
 	return Angle(ang);
 }
 
@@ -74,20 +77,13 @@ void PropagatePhoton(double *p, float i, double pDirX, double pDirY, double *wls
 
 	// Simplification -- If the angle direction is within the PMT acceptance then just stop propagation and move on
 	double r = sqrt(pow(p[0],2) + pow(p[1],2) );
-	double ang = asin(pmtR/r); // angle of acceptance above or below the direct angle
-	double yTMP; // This value is used to get the correct angle in cases where y = 0;
-	if (p[1] == 0){yTMP = 0.0000001;} else {yTMP = abs(p[1]);}
-	double directAng = Angle(atan(abs(p[0])/yTMP)); // direct angle from position to center of PMT.
+	double h = sqrt(pow(r,2) + pow(pmtR,2) ); // distance between the photon and the edge of the PMT forming a right angle with the center of the PMT
+	double ang = asin(pmtR/h); // angle of acceptance above or below the direct angle
+
+	double directAng = AngToCenter(p[0],p[1]); // direct angle from position to center of PMT.
 	double travelAng = p[2] ;// The angle of travel.
 
-	if (p[0] < 0 && p[1] < 0) {directAng = PI/2 - directAng;} // nothing changes // bottom left
-	if (p[0] >= 0 && p[1] < 0) {directAng += PI/2; } // bottom right
-	if (p[0] >= 0 && p[1] > 0) {directAng = 3*PI/2 - directAng;} // top right
-	if (p[0] < 0 && p[1] > 0) {directAng += 3*PI/2;} // top left
-
-	if (p[0] < 0 && p[1] ==0){directAng = 0;}
-	if (p[0] > 0 && p[1] ==0){directAng = PI;}
-
+	// Move photon to the center if it is heading for the PMT
 	if (travelAng < directAng + ang && travelAng > directAng -ang) {
 		p[0] = 0;
 		p[1] = 0;

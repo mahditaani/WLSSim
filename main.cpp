@@ -15,8 +15,6 @@
 // Defines
 #define PI 3.141592654
 
-
-
 std::default_random_engine gen(12345);
 std::uniform_real_distribution<double> reflect(0.,1.);
 
@@ -70,6 +68,7 @@ void Rotate(double *vec, double t){
 	vec[1] = tempY*cos(t) - tempX*sin(t);
 
 }
+
 // The PropagatePhoton function moves the photon and makes sure it is always in bounds.
 void PropagatePhoton(double *p, float i, double pDirX, double pDirY, double *wlsL, double pmtR, Shape shape, bool &circleEdge){
 
@@ -89,8 +88,6 @@ void PropagatePhoton(double *p, float i, double pDirX, double pDirY, double *wls
 	if (p[0] < 0 && p[1] ==0){directAng = 0;}
 	if (p[0] > 0 && p[1] ==0){directAng = PI;}
 
-	// DEBUG
-//	std::cout << "Ang, DirectAng, travel " << ang << " " << directAng << " " << travelAng << std::endl;
 	if (travelAng < directAng + ang && travelAng > directAng -ang) {
 		p[0] = 0;
 		p[1] = 0;
@@ -164,7 +161,6 @@ bool HitPMT(double *p, double pmtR){
 	double r = sqrt(pow(p[0],2) + pow(p[1],2) );
 	if (r <= pmtR) return true;
 	else return false;
-
 }
 
 // HitEdge function returns true if the photon has hit an edge and false otherwise.
@@ -234,7 +230,7 @@ bool ReflectPhoton(double *p, double &pDirX, double &pDirY,double *wlsL, Shape s
 
 		double posTemp[2] = {p[0],p[1]}; // store the direction temporarily
 		double dirTemp[2] = {pDirX,pDirY}; // store the direction temporarily
-		double angle = Angle(AngFromCenter(p[0],p[1])); // Gives the angle of rotation to get the tangent
+		double angle = AngFromCenter(p[0],p[1]); // Gives the angle of rotation to get the tangent
 
 		// Rotate the coordinates for simple calculations
 		Rotate(posTemp, angle);
@@ -328,15 +324,15 @@ int main(){
 
 	// WLS properties
 	Shape WLSShape = Square;
-//	Shape WLSShape = Rectangle;
-//	Shape WLSShape = Circle;
+	//Shape WLSShape = Rectangle;
+	//Shape WLSShape = Circle;
 	double WLSLength[2] = {23.0,23.0}; // cm. // Square each component is a full length
-//	double WLSLength[2] = {20.0,30.0}; // cm. // Rectangle x,y component are full lengths
-//	double WLSLength[2] = {14.0,14.0}; // cm. // Circle each component is the radius
+	//double WLSLength[2] = {20.0,30.0}; // cm. // Rectangle x,y component are full lengths
+	//double WLSLength[2] = {14.0,14.0}; // cm. // Circle each component is the radius
 
 	double WLSThickness = 0; // Not used yet (2D approximation)
 	double WLSRefractiveIndex = 1.58;
-//	double criticalAngle = asin(1.33/WLSRefractiveIndex); // if in water
+	//double criticalAngle = asin(1.33/WLSRefractiveIndex); // if in water
 	double criticalAngle = asin(1./WLSRefractiveIndex); // if in air
 
 	// PMT properties
@@ -359,21 +355,20 @@ int main(){
 	int reflect = 0;
 	int status = -1;
 
-   TFile *outfile = new TFile("WLS.root", "RECREATE");
-   TTree *tree = new TTree("simulation", "simulation");
-   tree->Branch("posX", &photPosX, "posX/D");
-   tree->Branch("posY", &photPosY, "posY/D");
-   tree->Branch("posR", &photPosR, "posR/D");
-   tree->Branch("dirX", &photDirX, "dirX/D");
-   tree->Branch("dirY", &photDirY, "dirY/D");
-   tree->Branch("dirTheta", &photDirTheta, "dirTheta/D");
-   tree->Branch("hitPMT", &hPMT, "hitPMT/I");
-   tree->Branch("reflections", &reflect, "reflections/I");
-   tree->Branch("status", &status, "status/I");
+	TFile *outfile = new TFile("WLS.root", "RECREATE");
+	TTree *tree = new TTree("simulation", "simulation");
+	tree->Branch("posX", &photPosX, "posX/D");
+	tree->Branch("posY", &photPosY, "posY/D");
+	tree->Branch("posR", &photPosR, "posR/D");
+	tree->Branch("dirX", &photDirX, "dirX/D");
+	tree->Branch("dirY", &photDirY, "dirY/D");
+	tree->Branch("dirTheta", &photDirTheta, "dirTheta/D");
+	tree->Branch("hitPMT", &hPMT, "hitPMT/I");
+	tree->Branch("reflections", &reflect, "reflections/I");
+	tree->Branch("status", &status, "status/I");
 
 
 	if (verbosity){
-
 		std::cout << "--------------------------------------" << std::endl;
 		std::cout << "------------SETTINGS------------------" << std::endl;
 		std::cout << "--------------------------------------" << std::endl;
@@ -398,7 +393,6 @@ int main(){
 		std::cout << "--------------------------------------" << std::endl;
 	}
 
-
 	std::vector<Phot> PhotonVector;
 	// Generate a point in the WLS
 
@@ -408,7 +402,6 @@ int main(){
 	std::uniform_real_distribution<double> distributionPosX;
 	std::uniform_real_distribution<double> distributionPosY;
 	std::uniform_real_distribution<double> distributionPosR;
-
 
 	if (WLSShape == Square){
 	distributionPos = std::uniform_real_distribution<double> (-WLSLength[0]/2,WLSLength[0]/2);
@@ -449,16 +442,12 @@ int main(){
 
 				if (verbosity){
 					std::cout << "Generated a point (x y):\t" << photPosX << " " << photPosY << std::endl;
-
 				}
 
 				if (photPosR > PMTRadius ) {
-
 					inPlate = true;
-
 				} else if (verbosity){
 					std::cout << "Generated point was inside PMT. Generating a new point." << std::endl;
-
 				}
 			}
 		}
@@ -474,16 +463,12 @@ int main(){
 
 				if (verbosity){
 					std::cout << "Generated a point (x y):\t" << photPosX << " " << photPosY << std::endl;
-
 				}
 
 				if (photPosR > PMTRadius ) {
-
 					inPlate = true;
-
 				} else if (verbosity){
 					std::cout << "Generated point was inside PMT. Generating a new point." << std::endl;
-
 				}
 			}
 		}
@@ -509,8 +494,6 @@ int main(){
 		}
 
 		// Generate a photon direction
-
-//		double photDirTheta = 2*PI*distributionDir(generator);
 		photDirTheta = distributionDir(generator);
 		photDirX = cos(photDirTheta);
 		photDirY = sin(photDirTheta);
@@ -518,9 +501,7 @@ int main(){
 		initDirY = photDirY;
 
 		if (verbosity){
-
 			std::cout << "Generated a photon direction (theta x y):\t" << photDirTheta << " " << photDirX << " "<< photDirY << std::endl;
-
 		}
 
 		// Trace photon for numBounce bounces and see if it reaches the PMT
@@ -539,9 +520,9 @@ int main(){
 
 		while (!hitPMT && reflect <= numBounce && !lost ){
 
-			// Move the photon
-	//		photonPosTemp[0] += increment*photPosX;
-	//		photonPosTemp[1] += increment*photPosY;
+			//Move the photon
+			//photonPosTemp[0] += increment*photPosX;
+			//photonPosTemp[1] += increment*photPosY;
 			PropagatePhoton(photonPosTemp, increment, photDirX, photDirY, WLSLength, PMTRadius, WLSShape, circleEdge);
 			if (verbosity){
 				std::cout << "Pos: " << photonPosTemp[0] << " " << photonPosTemp[1] << std::endl;
@@ -581,14 +562,11 @@ int main(){
 		photon.Dir[1] = initDirY;
 		photon.Dir[2] = photDirTheta;
 		photon.R = photPosR;
-//		photon.Theta = atan(photPosY/photPosX); // Photon angle from center
 		photon.Theta = AngFromCenter(photPosX, photPosY); // Photon angle from center
 		photon.hitPMT = hitPMT;
 		photon.numBounces = reflect;
 		photon.status = status;
 		PhotonVector.push_back(photon);
-//		std::cout << initDirX << "\t" << initDirY << std::endl;
-
 		// Save output to ROOT file
 		tree->Fill();
 	}

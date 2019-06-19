@@ -76,18 +76,11 @@ void PropagatePhoton(double *p, float i, double pDirX, double pDirY, double *wls
 	// Simplification -- If the angle direction is within the PMT acceptance then just stop propagation and move on
 	double r = sqrt(pow(p[0],2) + pow(p[1],2) );
 	double ang = asin(pmtR/r); // angle of acceptance above or below the direct angle
-//	double directAng = atan(p[0]/p[1]); // direct angle from position to center of PMT.
-//	double travelAng = atan(pDirX/pDirY); // The angle of travel.
 	double yTMP; // This value is used to get the correct angle in cases where y = 0;
 	if (p[1] == 0){yTMP = 0.0000001;} else {yTMP = abs(p[1]);}
 	double directAng = Angle(atan(abs(p[0])/yTMP)); // direct angle from position to center of PMT.
 	double travelAng = p[2] ;// The angle of travel.
-/*
-	//if (p[0] < 0 && p[1] < 0) {directAng = directAng; travelAng = travelAng;} // nothing changes // bottom left
-	if (p[0] > 0 && p[1] < 0) {directAng += PI/2; travelAng += PI/2;} // bottom right
-	if (p[0] > 0 && p[1] > 0) {directAng += PI; travelAng += PI;} // top right
-	if (p[0] < 0 && p[1] > 0) {directAng += 3*PI/4; travelAng += 3*PI/4;} // top left
-*/
+
 	if (p[0] < 0 && p[1] < 0) {directAng = PI/2 - directAng;} // nothing changes // bottom left
 	if (p[0] >= 0 && p[1] < 0) {directAng += PI/2; } // bottom right
 	if (p[0] >= 0 && p[1] > 0) {directAng = 3*PI/2 - directAng;} // top right
@@ -160,14 +153,9 @@ void PropagatePhoton(double *p, float i, double pDirX, double pDirY, double *wls
 			p[0] -= diffI*pDirX;
 			p[1] -= diffI*pDirY;
 
-
-
-
 		}
 
-
 	}
-
 
 }
 
@@ -201,7 +189,6 @@ bool ReflectPhoton(double *p, double &pDirX, double &pDirY,double *wlsL, Shape s
 
 	p[2] = Angle(p[2]); // Make sure angle is in correct range
 
-//	std::cout << "ref, mirror " << ref << " " << mirror << std::endl; //DEBUG
 	// Ensures that total internal reflection is treated separately from the reflective additions
 	if (shape == Square || shape == Rectangle){
 		if (p[0] == -wlsL[0]/2){
@@ -216,14 +203,10 @@ bool ReflectPhoton(double *p, double &pDirX, double &pDirY,double *wlsL, Shape s
 		if (p[1] == wlsL[1]/2){
 			if ( ( p[2] >= 0 && p[2] <= PI/2 - crit) || ( p[2] >= PI/2 + crit && p[2] <= PI) ) {ref = true;}
 		}
-//	std::cout << "P0, p1, p2, crit " << p[0] << ", " << p[1] << ", " << p[2]*180/PI << ", " << crit*180/PI<< std::endl; //DEBUG
+
 	}
 
-//	if (!ref) {
-//		if (reflect(gen) <= reflectivity) mirror = true;
-//	}
 
-//	std::cout << "ref, mirror " << ref << " " << mirror << std::endl; //DEBUG
 	// work out new direction components
 	if ( (shape == Square || shape == Rectangle) && (ref || mirror)){
 		if (p[0] == -wlsL[0]/2){
@@ -269,8 +252,6 @@ bool ReflectPhoton(double *p, double &pDirX, double &pDirY,double *wlsL, Shape s
 		if (pDirY < 0){
 			p[2] = 2*PI - p[2];
 		}
-
-
 
 	}
 
@@ -329,8 +310,6 @@ void ReflectPhoton(double *p, double &pDirX, double &pDirY,double *wlsL, Shape s
 			p[2] = 2*PI - p[2];
 		}
 
-
-
 	}
 
 }
@@ -348,7 +327,6 @@ int main(){
 	int nBin = 56;
 
 	// WLS properties
-
 	Shape WLSShape = Square;
 //	Shape WLSShape = Rectangle;
 //	Shape WLSShape = Circle;
@@ -368,34 +346,30 @@ int main(){
 	double WLSEfficiency = 1;
 	double WLSReflection = 1;
 
-
-
-       // Really messy way to output to a new file
-       double  photPosX = 0;
-       double  photPosY = 0;
-       double  photPosR = 0;
-       double photDirTheta = 0;
-       double photDirX = 0;
-       double photDirY = 0;
-       double initDirX = 0;
-       double initDirY = 0;
-       int hPMT = 0;
-       int reflect = 0;
+	// Really messy way to output to a new file
+	double  photPosX = 0;
+	double  photPosY = 0;
+	double  photPosR = 0;
+	double photDirTheta = 0;
+	double photDirX = 0;
+	double photDirY = 0;
+	double initDirX = 0;
+	double initDirY = 0;
+	int hPMT = 0;
+	int reflect = 0;
 	int status = -1;
 
-
-
-       TFile *outfile = new TFile("WLS.root", "RECREATE");
-       TTree *tree = new TTree("simulation", "simulation");
-       tree->Branch("posX", &photPosX, "posX/D");
-       tree->Branch("posY", &photPosY, "posY/D");
-       tree->Branch("posR", &photPosR, "posR/D");
-       tree->Branch("dirX", &photDirX, "dirX/D");
-       tree->Branch("dirY", &photDirY, "dirY/D");
-       tree->Branch("dirTheta", &photDirTheta, "dirTheta/D");
-       tree->Branch("hitPMT", &hPMT, "hitPMT/I");
-       tree->Branch("reflections", &reflect, "reflections/I");
-       tree->Branch("status", &status, "status/I");
+   TFile *outfile = new TFile("WLS.root", "RECREATE");
+   TTree *tree = new TTree("simulation", "simulation");
+   tree->Branch("posX", &photPosX, "posX/D");
+   tree->Branch("posY", &photPosY, "posY/D");
+   tree->Branch("posR", &photPosR, "posR/D");
+   tree->Branch("dirX", &photDirX, "dirX/D");
+   tree->Branch("dirY", &photDirY, "dirY/D");
+   tree->Branch("dirTheta", &photDirTheta, "dirTheta/D");
+   tree->Branch("hitPMT", &hPMT, "hitPMT/I");
+   tree->Branch("reflections", &reflect, "reflections/I");
+   tree->Branch("status", &status, "status/I");
 
 
 	if (verbosity){
@@ -422,10 +396,6 @@ int main(){
 		std::cout << "PMT Radius:\t"<< PMTRadius << std::endl;
 		std::cout << "--------------------------------------" << std::endl;
 		std::cout << "--------------------------------------" << std::endl;
-
-
-
-
 	}
 
 
@@ -454,25 +424,6 @@ int main(){
 	distributionDir = std::uniform_real_distribution<double> (0.0,2*PI);
 	}
 
-/*
-	std::uniform_real_distribution<double> distributionPos(-WLSLength/2,WLSLength/2);
-	std::uniform_real_distribution<double> distributionDir(0.0,2*PI);
-*/
-/*
-	if (WLSShape == Square){
-	std::uniform_real_distribution<double> distributionPos(-WLSLength[0]/2,WLSLength[0]/2);
-	std::uniform_real_distribution<double> distributionDir(0.0,2*PI);
-	}
-	if (WLSShape == Rectangle){
-	std::uniform_real_distribution<double> distributionPosX(-WLSLength[0]/2,WLSLength[0]/2);
-	std::uniform_real_distribution<double> distributionPosY(-WLSLength[1]/2,WLSLength[1]/2);
-	std::uniform_real_distribution<double> distributionDir(0.0,2*PI);
-	}
-	if (WLSShape == Circle){
-	std::uniform_real_distribution<double> distributionPosR(PMTRadius,WLSLength[0]);
-	std::uniform_real_distribution<double> distributionDir(0.0,2*PI);
-	}
-*/
 //--------------------------------------Start of LOOP---------------------------------------------------------------
 	for (int i = 0; i <numPhots; i++){
         	if (i % 1000 == 0){std::cout << "Generating Photon: " << i << std::endl;}
@@ -553,10 +504,7 @@ int main(){
 					std::cout << "Generated a point (x y):\t" << photPosX << " " << photPosY << std::endl;
 
 				}
-
-
 					inPlate = true;
-
 			}
 		}
 
@@ -646,9 +594,6 @@ int main(){
 	}
 //-------------------------END OF LOOP--------------------------------------------------------------------------------------
 
-
-
-
 	// Histograms
 	TH1D *generatedTheta = new TH1D("generatedTheta", "generatedTheta", nBin, 0, 2*PI); // captured photons plotted by radius
 	TH1D *radiusHist = new TH1D("radiusHist", "radiusHist", nBin, 0, WLSLength[0]); // captured photons plotted by radius
@@ -676,32 +621,31 @@ int main(){
 	TH2D *captureMapCart = new TH2D("captureMapCart", "captureMapCart", nBin, -WLSLength[0]/2, WLSLength[0]/2, nBin, -WLSLength[0]/2, WLSLength[0]/2); // mapping of plate
 	TH2D *captureMap = new TH2D("captureMap", "captureMap", nBin, 0, 2*PI, nBin, 0, WLSLength[0]); // mapping of plate
 
+	radiusHist->Sumw2();
+	radiusCapture->Sumw2();
+	radiusCapture0->Sumw2();
+	radiusCapture1->Sumw2();
+	radiusCapture2->Sumw2();
+	radiusCapture3->Sumw2();
+	radiusCapture4->Sumw2();
+	radiusCapture5->Sumw2();
+	radiusCapture6->Sumw2();
+	radiusCapture7->Sumw2();
+	radiusCaptureR->Sumw2();
+	radiusCapture0R->Sumw2();
+	radiusCapture1R->Sumw2();
+	radiusCapture2R->Sumw2();
+	radiusCapture3R->Sumw2();
+	radiusCapture4R->Sumw2();
+	radiusCapture5R->Sumw2();
+	radiusCapture6R->Sumw2();
+	radiusCapture7R->Sumw2();
+	captureMap->Sumw2();
+	generatedPosCart->Sumw2();
+	generatedDirCart->Sumw2();
+	generatedTheta->Sumw2();
+	captureMapCart->Sumw2();
 
-
-        radiusHist->Sumw2();
-        radiusCapture->Sumw2();
-        radiusCapture0->Sumw2();
-        radiusCapture1->Sumw2();
-        radiusCapture2->Sumw2();
-        radiusCapture3->Sumw2();
-        radiusCapture4->Sumw2();
-        radiusCapture5->Sumw2();
-        radiusCapture6->Sumw2();
-        radiusCapture7->Sumw2();
-        radiusCaptureR->Sumw2();
-        radiusCapture0R->Sumw2();
-        radiusCapture1R->Sumw2();
-        radiusCapture2R->Sumw2();
-        radiusCapture3R->Sumw2();
-        radiusCapture4R->Sumw2();
-        radiusCapture5R->Sumw2();
-        radiusCapture6R->Sumw2();
-        radiusCapture7R->Sumw2();
-        captureMap->Sumw2();
-        generatedPosCart->Sumw2();
-        generatedDirCart->Sumw2();
-        generatedTheta->Sumw2();
-        captureMapCart->Sumw2();
 	for (int i = 0; i < PhotonVector.size(); i++ ){
 
 		generatedPosCart->Fill(PhotonVector[i].Pos[0], PhotonVector[i].Pos[1]);
@@ -726,37 +670,32 @@ int main(){
 			captureMapCart->Fill(PhotonVector[i].Pos[0], PhotonVector[i].Pos[1]);
 		}
 
-
-
 	}
 
 	for (int i = 1; i <= nBin; i++){
 		double normVal = radiusHist->GetBinContent(i);
 		if (normVal ==0) normVal = 1;
 
+      radiusCaptureR->SetBinContent(i,radiusCapture->GetBinContent(i)/normVal);
+      radiusCaptureR->SetBinError(i,radiusCapture->GetBinError(i)/normVal);
+      radiusCapture0R->SetBinContent(i,radiusCapture0->GetBinContent(i)/normVal);
+      radiusCapture0R->SetBinError(i,radiusCapture0->GetBinError(i)/normVal);
+      radiusCapture1R->SetBinContent(i,radiusCapture1->GetBinContent(i)/normVal);
+      radiusCapture1R->SetBinError(i,radiusCapture1->GetBinError(i)/normVal);
+      radiusCapture2R->SetBinContent(i,radiusCapture2->GetBinContent(i)/normVal);
+      radiusCapture2R->SetBinError(i,radiusCapture2->GetBinError(i)/normVal);
+      radiusCapture3R->SetBinContent(i,radiusCapture3->GetBinContent(i)/normVal);
+      radiusCapture3R->SetBinError(i,radiusCapture3->GetBinError(i)/normVal);
+      radiusCapture4R->SetBinContent(i,radiusCapture4->GetBinContent(i)/normVal);
+      radiusCapture4R->SetBinError(i,radiusCapture4->GetBinError(i)/normVal);
+      radiusCapture5R->SetBinContent(i,radiusCapture5->GetBinContent(i)/normVal);
+      radiusCapture5R->SetBinError(i,radiusCapture5->GetBinError(i)/normVal);
+      radiusCapture6R->SetBinContent(i,radiusCapture6->GetBinContent(i)/normVal);
+      radiusCapture6R->SetBinError(i,radiusCapture6->GetBinError(i)/normVal);
+      radiusCapture7R->SetBinContent(i,radiusCapture7->GetBinContent(i)/normVal);
+      radiusCapture7R->SetBinError(i,radiusCapture7->GetBinError(i)/normVal);
 
-                radiusCaptureR->SetBinContent(i,radiusCapture->GetBinContent(i)/normVal);
-                radiusCaptureR->SetBinError(i,radiusCapture->GetBinError(i)/normVal);
-                radiusCapture0R->SetBinContent(i,radiusCapture0->GetBinContent(i)/normVal);
-                radiusCapture0R->SetBinError(i,radiusCapture0->GetBinError(i)/normVal);
-                radiusCapture1R->SetBinContent(i,radiusCapture1->GetBinContent(i)/normVal);
-                radiusCapture1R->SetBinError(i,radiusCapture1->GetBinError(i)/normVal);
-                radiusCapture2R->SetBinContent(i,radiusCapture2->GetBinContent(i)/normVal);
-                radiusCapture2R->SetBinError(i,radiusCapture2->GetBinError(i)/normVal);
-                radiusCapture3R->SetBinContent(i,radiusCapture3->GetBinContent(i)/normVal);
-                radiusCapture3R->SetBinError(i,radiusCapture3->GetBinError(i)/normVal);
-                radiusCapture4R->SetBinContent(i,radiusCapture4->GetBinContent(i)/normVal);
-                radiusCapture4R->SetBinError(i,radiusCapture4->GetBinError(i)/normVal);
-                radiusCapture5R->SetBinContent(i,radiusCapture5->GetBinContent(i)/normVal);
-                radiusCapture5R->SetBinError(i,radiusCapture5->GetBinError(i)/normVal);
-                radiusCapture6R->SetBinContent(i,radiusCapture6->GetBinContent(i)/normVal);
-                radiusCapture6R->SetBinError(i,radiusCapture6->GetBinError(i)/normVal);
-                radiusCapture7R->SetBinContent(i,radiusCapture7->GetBinContent(i)/normVal);
-                radiusCapture7R->SetBinError(i,radiusCapture7->GetBinError(i)/normVal);
-
-//	std::cout << "Bin:\t" << i << "\t" << radiusCapture2->GetBinContent(i) << "\t" << radiusHist->GetBinContent(i)<< "\t" <<radiusCapture2->GetBinContent(i)/radiusHist->GetBinContent(i) << std::endl;
 	}
-
 
 	radiusHist->Write();
 	radiusCapture->Write();
@@ -786,18 +725,6 @@ int main(){
 
 	outfile->Close();
 
-
-
-
-
-
-
-
-
-
 	return 0;
-
-
-
 
 } // End of the main function.

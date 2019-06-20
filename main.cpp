@@ -215,11 +215,7 @@ bool ReflectPhoton(double *p, double &pDirX, double &pDirY,double *wlsL, Shape s
 		}
 
 		// work out new travelling angle
-		p[2] = acos(pDirX);
-
-		if (pDirY < 0){
-			p[2] = 2*PI - p[2];
-		}
+		p[2] = AngFromCenter(pDirX, pDirY);
 	}
 
 	if (shape == Circle){
@@ -239,11 +235,7 @@ bool ReflectPhoton(double *p, double &pDirX, double &pDirY,double *wlsL, Shape s
 		pDirY = dirTemp[1];
 
 		// work out new travelling angle
-		p[2] = acos(pDirX);
-
-		if (pDirY < 0){
-			p[2] = 2*PI - p[2];
-		}
+		p[2] = AngFromCenter(pDirX, pDirY);
 
 	}
 
@@ -271,12 +263,8 @@ void ReflectPhoton(double *p, double &pDirX, double &pDirY,double *wlsL, Shape s
 			pDirY*=-1;
 		}
 
-		// work out new travelling angle
-		p[2] = acos(pDirX);
-
-		if (pDirY < 0){
-			p[2] = 2*PI - p[2];
-		}
+			// work out new travelling angle
+		p[2] = AngFromCenter(pDirX, pDirY);
 	}
 
 	if (shape == Circle){
@@ -296,11 +284,7 @@ void ReflectPhoton(double *p, double &pDirX, double &pDirY,double *wlsL, Shape s
 		pDirY = dirTemp[1];
 
 		// work out new travelling angle
-		p[2] = acos(pDirX);
-
-		if (pDirY < 0){
-			p[2] = 2*PI - p[2];
-		}
+		p[2] = AngFromCenter(pDirX, pDirY);
 
 	}
 

@@ -62,7 +62,7 @@ double AngToCenter(double x, double y){
 	return Angle(ang);
 }
 
-// A function to rotate cartesian coordinated by theta
+// A function to rotate cartesian coordinated by theta clockwise
 void Rotate(double *vec, double t){
 	double tempX = vec[0];
 	double tempY = vec[1];
@@ -70,6 +70,14 @@ void Rotate(double *vec, double t){
 	vec[0] = tempX*cos(t) + tempY*sin(t);
 	vec[1] = tempY*cos(t) - tempX*sin(t);
 
+}
+
+// A function to work out if the angle is less than the critical angle
+// rotates the coordinates by a required amount (to make vec(1,0) the 0 degrees)
+// then sees if the angle of incidence is within the critical angle limits
+bool IsCrit(double angDir, double angle, double crit){
+	double ang = Angle(angDir - angle);
+	if (ang >= Angle(crit) && ang <= Angle(-crit) ) {return true;} else {return false;}
 }
 
 // The PropagatePhoton function moves the photon and makes sure it is always in bounds.
@@ -184,20 +192,19 @@ bool ReflectPhoton(double *p, double &pDirX, double &pDirY,double *wlsL, Shape s
 	// Ensures that total internal reflection is treated separately from the reflective additions
 	if (shape == Square || shape == Rectangle){
 		if (p[0] == -wlsL[0]/2){
-			if ( (p[2] >= PI + crit && p[2] <= 3*PI/2) || ( p[2] >= PI/2 && p[2] <= PI - crit ) ){ref = true;}
+			if ( IsCrit(p[2], PI , crit) ){ref = true;}
 		}
 		if (p[0] == wlsL[0]/2){
-			if ( (p[2] >= crit && p[2] <= PI/2) || (p[2] >= 3*PI/2 && p[2] <= 2*PI - crit ) ){ref = true;}
+			if ( IsCrit(p[2], 0 , crit) ){ref = true;}
 		}
 		if (p[1] == -wlsL[1]/2){
-			if ( (p[2] >= PI && p[2] <= 3*PI/2 -crit ) || ( p[2] >= 3*PI/2 + crit && p[2] <= 0 ) ){ref = true;} // used 0 instead of 2 pi here
+			if ( IsCrit(p[2], 3*PI/2 , crit) ){ref = true;}
 		}
 		if (p[1] == wlsL[1]/2){
-			if ( ( p[2] >= 0 && p[2] <= PI/2 - crit) || ( p[2] >= PI/2 + crit && p[2] <= PI) ) {ref = true;}
+			if ( IsCrit(p[2], PI/2 , crit) ) {ref = true;}
 		}
 
 	}
-
 
 	// work out new direction components
 	if ( (shape == Square || shape == Rectangle) && (ref || mirror)){
@@ -220,7 +227,7 @@ bool ReflectPhoton(double *p, double &pDirX, double &pDirY,double *wlsL, Shape s
 
 	if (shape == Circle){
 
-		double posTemp[2] = {p[0],p[1]}; // store the direction temporarily
+		double posTemp[2] = {p[0],p[1]}; // store the position temporarily
 		double dirTemp[2] = {pDirX,pDirY}; // store the direction temporarily
 		double angle = AngFromCenter(p[0],p[1]); // Gives the angle of rotation to get the tangent
 
@@ -241,53 +248,6 @@ bool ReflectPhoton(double *p, double &pDirX, double &pDirY,double *wlsL, Shape s
 
 	if (!ref && !mirror) lost = true;
 	return lost;
-}
-
-// ReflectPhoton function reverses the direction of the photon hitting an edge.
-void ReflectPhoton(double *p, double &pDirX, double &pDirY,double *wlsL, Shape shape){
-
-	p[2] = Angle(p[2]); // make sure angle is in the correct range
-
-	// work out new direction components
-	if (shape == Square || shape == Rectangle){
-		if (p[0] == -wlsL[0]/2){
-			pDirX*=-1;
-		}
-		if (p[0] == wlsL[0]/2){
-			pDirX*=-1;
-		}
-		if (p[1] == -wlsL[1]/2){
-			pDirY*=-1;
-		}
-		if (p[1] == wlsL[1]/2){
-			pDirY*=-1;
-		}
-
-			// work out new travelling angle
-		p[2] = AngFromCenter(pDirX, pDirY);
-	}
-
-	if (shape == Circle){
-
-		double posTemp[2] = {p[0],p[1]}; // store the direction temporarily
-		double dirTemp[2] = {pDirX,pDirY}; // store the direction temporarily
-		double angle = AngFromCenter(p[0],p[1]); // Gives the angle of rotation to get the tangent
-
-		// Rotate the coordinates for simple calculations
-		Rotate(posTemp, angle);
-		Rotate(dirTemp, angle);
-
-		dirTemp[0] *= -1; // flip the x' direction
-		Rotate(dirTemp, (2*PI-angle)	); // Rotate back the direction coordinates
-
-		pDirX = dirTemp[0];
-		pDirY = dirTemp[1];
-
-		// work out new travelling angle
-		p[2] = AngFromCenter(pDirX, pDirY);
-
-	}
-
 }
 
 

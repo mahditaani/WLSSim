@@ -37,6 +37,13 @@ enum Shape {
 	Rectangle
 }; // Enumeration to hold the different WLS shapes
 
+// A function to see if two values are roughly equal
+bool RoughlyEqual(double a, double b){
+	double tolerance = 0.001;
+  if ( a >= b - tolerance && a <= b+ tolerance) {
+  	return true;}
+  else { return false;}
+ }
 // A function to keep all angle ranges between 0 and 2PI
 double Angle(double x){
 	while (x >= 2*PI){
@@ -174,7 +181,7 @@ bool HitEdge(double *p, double *wlsL, Shape shape){
 
 
 	if ( ( shape == Square || shape == Rectangle) && (p[0] == -wlsL[0]/2 || p[0] == wlsL[0]/2 || p[1] == -wlsL[1]/2 || p[1] == wlsL[1]/2) ) return true;
-	else if ( shape == Circle && r == wlsL[0] ) return true;
+	else if ( shape == Circle &&  RoughlyEqual(r,wlsL[0]) ) return true;
 	else return false;
 
 
@@ -226,7 +233,7 @@ bool ReflectPhoton(double *p, double &pDirX, double &pDirY,double *wlsL, Shape s
 	}
 
 	if (shape == Circle){
-
+		ref = true;
 		double posTemp[2] = {p[0],p[1]}; // store the position temporarily
 		double dirTemp[2] = {pDirX,pDirY}; // store the direction temporarily
 		double angle = AngFromCenter(p[0],p[1]); // Gives the angle of rotation to get the tangent

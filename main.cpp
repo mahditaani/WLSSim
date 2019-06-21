@@ -28,6 +28,8 @@ typedef struct {
 	double Theta = 0; // Photon angle from center
 	bool hitPMT = false;
 	int numBounces = 0;
+	int dist = 0; // photon travel distance
+	int time = 0; // photon travel time
 	int status = -1; // 0: captured; 1: lost;
 } Phot ; // Structure to hold the information about the photons
 
@@ -88,7 +90,11 @@ bool IsCrit(double angDir, double angle, double crit){
 }
 
 // The PropagatePhoton function moves the photon and makes sure it is always in bounds.
-void PropagatePhoton(double *p, float i, double pDirX, double pDirY, double *wlsL, double pmtR, Shape shape, bool &circleEdge){
+void PropagatePhoton(double *p, float i, double pDirX, double pDirY, double *wlsL, double pmtR, Shape shape, double &dist){
+
+	// Variables used to work out the travel distance
+	double startX = p[0];
+	double startY = p[1];
 
 	// Simplification -- If the angle direction is within the PMT acceptance then just stop propagation and move on
 	double r = sqrt(pow(p[0],2) + pow(p[1],2) );
@@ -102,6 +108,7 @@ void PropagatePhoton(double *p, float i, double pDirX, double pDirY, double *wls
 	if (travelAng < directAng + ang && travelAng > directAng -ang) {
 		p[0] = 0;
 		p[1] = 0;
+		dist -= pmtR; // this is to be subtracted because the distance should only count until the edge of the pmt. This code puts the photon in the center so it overshot by pmtR.
 	}
 
 	p[0] += i*pDirX; // Move photon by (increment)*xDir
@@ -164,7 +171,7 @@ void PropagatePhoton(double *p, float i, double pDirX, double pDirY, double *wls
 		}
 
 	}
-
+	dist += sqrt( pow(startX - p[0], 2) + pow(startY - p[1], 2) ); // add the distance travelled onto the overall distance
 }
 
 
@@ -294,6 +301,11 @@ int main(){
 	double WLSEfficiency = 1;
 	double WLSReflection = 1;
 
+	// Speed of light in plate
+	double photonSpeed = 299792000/WLSRefractiveIndex; // speed of light in vacuum (m/s) / refractive index
+	photonSpeed *= 100; // m/s into cm/s
+
+
 	// Really messy way to output to a new file
 	double  photPosX = 0;
 	double  photPosY = 0;
@@ -304,6 +316,8 @@ int main(){
 	double initDirX = 0;
 	double initDirY = 0;
 	int hPMT = 0;
+	double dist = 0;
+	double time = 0;
 	int reflect = 0;
 	int status = -1;
 
@@ -317,6 +331,8 @@ int main(){
 	tree->Branch("dirTheta", &photDirTheta, "dirTheta/D");
 	tree->Branch("hitPMT", &hPMT, "hitPMT/I");
 	tree->Branch("reflections", &reflect, "reflections/I");
+	tree->Branch("dist", &dist, "dist/D");
+	tree->Branch("time", &time, "time/D");
 	tree->Branch("status", &status, "status/I");
 
 
@@ -380,6 +396,9 @@ int main(){
 		photDirY = 0;
 		initDirX = 0;
 		initDirY = 0;
+		dist = 0;
+		time = 0;
+
 		bool inPlate = false;
 
 		if (WLSShape == Square){
@@ -475,7 +494,7 @@ int main(){
 			//Move the photon
 			//photonPosTemp[0] += increment*photPosX;
 			//photonPosTemp[1] += increment*photPosY;
-			PropagatePhoton(photonPosTemp, increment, photDirX, photDirY, WLSLength, PMTRadius, WLSShape, circleEdge);
+			PropagatePhoton(photonPosTemp, increment, photDirX, photDirY, WLSLength, PMTRadius, WLSShape, dist);
 			if (verbosity){
 				std::cout << "Pos: " << photonPosTemp[0] << " " << photonPosTemp[1] << std::endl;
 			}
@@ -507,6 +526,8 @@ int main(){
 
 		}
 
+		time = dist/photonSpeed;
+
 		Phot photon;
 		photon.Pos[0] = photPosX;
 		photon.Pos[1] = photPosY;
@@ -517,6 +538,8 @@ int main(){
 		photon.Theta = AngFromCenter(photPosX, photPosY); // Photon angle from center
 		photon.hitPMT = hitPMT;
 		photon.numBounces = reflect;
+		photon.dist = dist;
+		photon.time = time;
 		photon.status = status;
 		PhotonVector.push_back(photon);
 		// Save output to ROOT file

@@ -7,11 +7,14 @@
 #include <vector>
 #include <random>
 #include <cmath>
+#include <fstream> // Stream class to read and write from/to files
 
 // ROOT Includes
 #include "TFile.h"
 #include "TH1D.h"
 #include "TCanvas.h"
+#include "TH2D.h"
+#include "TTree.h"
 
 // Defines
 #define PI 3.141592654

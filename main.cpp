@@ -17,7 +17,7 @@
 #define PI 3.141592654
 
 std::default_random_engine gen(12345);
-std::uniform_real_distribution<double> reflect(0.,1.);
+std::uniform_real_distribution<double> ProbabilityGen(0.,1.);
 
 
 typedef struct {
@@ -30,7 +30,7 @@ typedef struct {
 	int numBounces = 0;
 	double dist = 0; // photon travel distance
 	double time = 0; // photon travel time
-	int status = -1; // 0: captured; 1: lost;
+	int status = -1; // 0: captured; 1: lost; 2: attenuated;
 } Phot ; // Structure to hold the information about the photons
 
 enum Shape {
@@ -45,6 +45,12 @@ bool RoughlyEqual(double a, double b){
   if ( a >= b - tolerance && a <= b+ tolerance) {
   	return true;}
   else { return false;}
+ }
+// A function to see if the photon has died or not
+ bool IsAttenuated(double d, double lambda){
+	 if ( ProbabilityGen(gen) >= exp(-1*d/lambda) )
+	 {return true;}
+	 else {return false;}
  }
 // A function to keep all angle ranges between 0 and 2PI
 double Angle(double x){
@@ -278,7 +284,7 @@ int main(){
 	int numPhots = 1000000; // Number of photons to generate
 	int seed = 12345; // Seed for random generator
 	float increment = 0.1; // Value to increment the steps of the photon
-
+	double attL = 100; // attenuation length in cm
 	int nBin = 56;
 
 	// WLS properties
@@ -479,8 +485,8 @@ int main(){
 		// Keep track of the number of bounces
 		double photonPosTemp[3] = {photPosX, photPosY,photDirTheta};
 		bool hitPMT = false;
-		bool circleEdge = false;
 		bool lost = false;
+		bool attenuated = false;
 		hPMT = 0;
 		reflect = 0;
 
@@ -489,7 +495,8 @@ int main(){
 			std::cout << "Pos: " << photonPosTemp[0] << " " << photonPosTemp[1] << std::endl;
 		}
 
-		while (!hitPMT && reflect <= numBounce && !lost ){
+		while (!hitPMT && reflect <= numBounce && !lost && !attenuated){
+
 
 			//Move the photon
 			//photonPosTemp[0] += increment*photPosX;
@@ -502,13 +509,14 @@ int main(){
 			if (HitPMT(photonPosTemp, PMTRadius)) {
 				hitPMT = true;
 				hPMT = 1;
+				status = 0;
 				if (verbosity){
 					std::cout << "PMT Hit" << std::endl;
 
 				}
 
 			}
-			if (circleEdge || HitEdge(photonPosTemp, WLSLength, WLSShape)) {
+			if ( HitEdge(photonPosTemp, WLSLength, WLSShape)) {
 //				ReflectPhoton(photonPosTemp, photDirX, photDirY, WLSLength, WLSShape);
 				lost = ReflectPhoton(photonPosTemp, photDirX, photDirY, WLSLength, WLSShape, criticalAngle, WLSReflection);
 				if (!lost) {
@@ -522,7 +530,8 @@ int main(){
 				}
 			}
 
-		if (hitPMT) {status = 0;}
+		attenuated = IsAttenuated(dist, attL); // checks to see if the photon survived
+		if (attenuated){status = 2; hitPMT = false; hPMT = 0;}
 
 		}
 

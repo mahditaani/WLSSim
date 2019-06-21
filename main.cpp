@@ -212,6 +212,12 @@ bool ReflectPhoton(double *p, double &pDirX, double &pDirY,double *wlsL, Shape s
 		}
 
 	}
+	if (shape == Circle){
+		// rotates the circle so that the point of the photon is at 0 degrees then sees if it is larger than the critical angle
+		if(IsCrit(p[2], AngFromCenter(p[0], p[1]) , crit) ){
+			ref = true;
+		}
+	}
 
 	// work out new direction components
 	if ( (shape == Square || shape == Rectangle) && (ref || mirror)){
@@ -232,8 +238,7 @@ bool ReflectPhoton(double *p, double &pDirX, double &pDirY,double *wlsL, Shape s
 		p[2] = AngFromCenter(pDirX, pDirY);
 	}
 
-	if (shape == Circle){
-		ref = true;
+	if (shape == Circle  && (ref || mirror) ){
 		double posTemp[2] = {p[0],p[1]}; // store the position temporarily
 		double dirTemp[2] = {pDirX,pDirY}; // store the direction temporarily
 		double angle = AngFromCenter(p[0],p[1]); // Gives the angle of rotation to get the tangent

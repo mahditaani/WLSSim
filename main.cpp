@@ -497,10 +497,6 @@ int main(){
 
 		while (!hitPMT && reflect <= numBounce && !lost && !attenuated){
 
-
-			//Move the photon
-			//photonPosTemp[0] += increment*photPosX;
-			//photonPosTemp[1] += increment*photPosY;
 			PropagatePhoton(photonPosTemp, increment, photDirX, photDirY, WLSLength, PMTRadius, WLSShape, dist);
 			if (verbosity){
 				std::cout << "Pos: " << photonPosTemp[0] << " " << photonPosTemp[1] << std::endl;
@@ -517,7 +513,7 @@ int main(){
 
 			}
 			if ( HitEdge(photonPosTemp, WLSLength, WLSShape)) {
-//				ReflectPhoton(photonPosTemp, photDirX, photDirY, WLSLength, WLSShape);
+
 				lost = ReflectPhoton(photonPosTemp, photDirX, photDirY, WLSLength, WLSShape, criticalAngle, WLSReflection);
 				if (!lost) {
 					reflect++;

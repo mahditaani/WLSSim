@@ -28,8 +28,8 @@ typedef struct {
 	double Theta = 0; // Photon angle from center
 	bool hitPMT = false;
 	int numBounces = 0;
-	int dist = 0; // photon travel distance
-	int time = 0; // photon travel time
+	double dist = 0; // photon travel distance
+	double time = 0; // photon travel time
 	int status = -1; // 0: captured; 1: lost;
 } Phot ; // Structure to hold the information about the photons
 

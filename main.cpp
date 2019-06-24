@@ -283,17 +283,13 @@ bool ReflectPhoton(double *p, double &pDirX, double &pDirY,double *wlsL, Shape s
 
 int main(int argc, char* argv[]){
 
-    // Declares the main() input parameters
-    float WLSx;
-    float WLSy;
+    // Initiates the main() input parameters
+    float WLSx = 20.0;
+    float WLSy = 30.0;
     // Toggle input parameteres
     if(true){
         WLSx = atof(argv[1]);
         WLSy = atof(argv[2]);
-    }
-    else{
-        WLSx = 20.0;
-        WLSy = 30.0;
     }
 
     // PMT properties

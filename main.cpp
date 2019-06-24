@@ -7,7 +7,6 @@
 #include <vector>
 #include <random>
 #include <cmath>
-#include <fstream> // Stream class to read and write from/to files
 
 // ROOT Includes
 #include "TFile.h"
@@ -297,7 +296,7 @@ int main(int argc, char* argv[]){
 
     // Initiates the number of photons generated
     int numPhots = 1000000;
-    // Toggle fixed density
+    // Toggle fixed density for squares and rectangles -> density = 1 milliom photons over a 1m x 1m plate
     if(true){
         float areaRatio = ((WLSx * WLSy) - (PI * PMTRadius * PMTRadius)) / ((10000.0) - (PI * PMTRadius * PMTRadius));
         numPhots = numPhots * areaRatio;
@@ -348,7 +347,9 @@ int main(int argc, char* argv[]){
 	int status = -1;
 
 
+    // Designates a seperate tag for each combination of plate size
     std::string name = "WLS" + std::to_string(WLSx) + "x" + std::to_string(WLSy) + ".root";
+
     TFile *outfile = new TFile(name.c_str(), "RECREATE");
 	TTree *tree = new TTree("simulation", "simulation");
 	tree->Branch("posX", &photPosX, "posX/D");

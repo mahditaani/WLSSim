@@ -296,10 +296,10 @@ int main(int argc, char* argv[]){
 
     // Initiates the number of photons generated
     int numPhots = 1000000;
-    // Toggle fixed density for squares and rectangles -> density = 1 milliom photons over a 1m x 1m plate
+    // Toggle fixed density for squares and rectangles -> density = 100 photons per square cm
     if(true){
-        float areaRatio = ((WLSx * WLSy) - (PI * PMTRadius * PMTRadius)) / ((10000.0) - (PI * PMTRadius * PMTRadius));
-        numPhots = numPhots * areaRatio;
+        float effArea = ((WLSx * WLSy) - (PI * PMTRadius * PMTRadius));
+        numPhots = 100 * effArea;
     }
 
 	bool verbosity = false;

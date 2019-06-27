@@ -17,10 +17,10 @@ void SeePlots(){
 
 	TFile *inFile = new TFile("WLS.root", "READ");
 	TTree *inTree = (TTree*) inFile->Get("simulation");
-	
-	double posX, posY, posR, dirX, dirY, dirT ; 
-	int hitPMT, ref; 
-	double WLSLength = 28.0;
+
+	double posX, posY, posR, dirX, dirY, dirT ;
+	int hitPMT, ref;
+	double WLSLength = 50.0;
 	double granularity = 0.5;
 //	double granularity =1;
 
@@ -43,11 +43,11 @@ void SeePlots(){
 	int plateHit2[size][size];
 //	int plateGen[56][56];
 //	int plateHit[56][56];
-	
+
 //	int plateGen[size][size];
 //	int plateHit[size][size];
-//	std::vector<std::vector<double (size)>> plateGen (size);		
-//	std::vector<std::vector<double (size)>> plateHit (size);	
+//	std::vector<std::vector<double (size)>> plateGen (size);
+//	std::vector<std::vector<double (size)>> plateHit (size);
 
 /*
 	inTree->GetEntry(1);
@@ -55,16 +55,16 @@ void SeePlots(){
 	std::cout << "pos " << posX << " " << posY << " " << posR << std::endl;
 	std::cout << "dir " << dirX << " " << dirY << " " << dirT << std::endl;
 	std::cout << "Hit " << hitPMT << " with " << ref << " reflections." << std::endl;
-*/	
+*/
 	// Initialise array
 
 	for (int i = 0; i <size; i++){
 
 		for (int j = 0; j<size; j++){
-			plateHit[i][j] = 0; 
-			plateHit0[i][j] = 0; 
-			plateHit1[i][j] = 0; 
-			plateHit2[i][j] = 0; 
+			plateHit[i][j] = 0;
+			plateHit0[i][j] = 0;
+			plateHit1[i][j] = 0;
+			plateHit2[i][j] = 0;
 			plateGen[i][j] = 0;
 		}
 
@@ -75,8 +75,8 @@ void SeePlots(){
 	for (int i = 0; i < inTree->GetEntries(); i++) {
 //	for (int i = 0; i < 10; i++) {
 		inTree->GetEntry(i);
-	
-		int xBin = (int) ( (WLSLength/2 + posX)/granularity ); 
+
+		int xBin = (int) ( (WLSLength/2 + posX)/granularity );
 		int yBin = (int) ( (WLSLength/2 + posY)/granularity );
 //		std::cout << WLSLength/2 << " " << posX << " " << granularity << std::endl;
 //		std::cout << WLSLength/2 << " " << posY << " " << granularity << std::endl;
@@ -89,7 +89,7 @@ void SeePlots(){
 			if (ref == 1) plateHit1[xBin][yBin]++;
 			if (ref == 2) plateHit2[xBin][yBin]++;
 		}
-	
+
 	}
 
 	TH2D * mapGen = new TH2D ("mapGen", "mapGen", size, 0, WLSLength, size, 0, WLSLength);
@@ -105,15 +105,15 @@ void SeePlots(){
 	TH2D * mapEff2 = new TH2D ("mapEff2", "mapEff2", size, 0, WLSLength, size, 0, WLSLength);
 	mapEff2->SetMaximum(1);
 	mapEff2->SetMinimum(0);
-	
+
 
 	for (int i = 0; i <size; i++){
 
 		for (int j = 0; j<size; j++){
-			double Val = (double)plateHit[i][j]; 
-			double Val0 = (double)plateHit0[i][j]; 
-			double Val1 = (double)plateHit1[i][j]; 
-			double Val2 = (double)plateHit2[i][j]; 
+			double Val = (double)plateHit[i][j];
+			double Val0 = (double)plateHit0[i][j];
+			double Val1 = (double)plateHit1[i][j];
+			double Val2 = (double)plateHit2[i][j];
 			double norm = (double)plateGen[i][j];
 //			std::cout << i << " " << j << " " << norm << std::endl;
 			if (norm == 0) norm = 1;

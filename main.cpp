@@ -303,7 +303,7 @@ int main(int argc, char* argv[]){
     }
 
 	bool verbosity = false;
-	int numBounce = 7; // Maximum number of bounces of light to trace
+	int numBounce = 0; // Maximum number of bounces of light to trace
 	int seed = 12345; // Seed for random generator
 	float increment = 0.1; // Value to increment the steps of the photon
 	double attL = 100; // attenuation length in cm
@@ -434,11 +434,11 @@ int main(int argc, char* argv[]){
 		if (WLSShape == Square){
 			while (!inPlate) {
 				// Across the whole plate
-				photPosX = distributionPos(generator);
-				photPosY = distributionPos(generator);
-				// On axis
-				//photPosX = 0;
+				//photPosX = distributionPos(generator);
 				//photPosY = distributionPos(generator);
+				// On axis
+				photPosX = -0.5;
+				photPosY = abs(distributionPos(generator));
 				photPosR = sqrt( pow(photPosX,2) + pow(photPosY,2) );
 
 				if (verbosity){

@@ -7,7 +7,6 @@
 #include <vector>
 #include <random>
 #include <cmath>
-#include <fstream> // Stream class to read and write from/to files
 
 // ROOT Includes
 #include "TFile.h"
@@ -281,10 +280,30 @@ bool ReflectPhoton(double *p, double &pDirX, double &pDirY,double *wlsL, Shape s
 
 // Main function
 
-int main(){
+int main(int argc, char* argv[]){
+
+    // Initiates the main() input parameters
+    float WLSx = 20.0;
+    float WLSy = 30.0;
+    // Toggle input parameteres
+    if(true){
+        WLSx = atof(argv[1]);
+        WLSy = atof(argv[2]);
+    }
+
+    // PMT properties
+	double PMTRadius = 12.7; // cm.
+
+    // Initiates the number of photons generated
+    int numPhots = 1000000;
+    // Toggle fixed density for squares and rectangles -> density = 100 photons per square cm
+    if(true){
+        float effArea = ((WLSx * WLSy) - (PI * PMTRadius * PMTRadius));
+        numPhots = 100 * effArea;
+    }
+
 	bool verbosity = false;
 	int numBounce = 7; // Maximum number of bounces of light to trace
-	int numPhots = 1000000; // Number of photons to generate
 	int seed = 12345; // Seed for random generator
 	float increment = 0.1; // Value to increment the steps of the photon
 	double attL = 100; // attenuation length in cm
@@ -294,17 +313,14 @@ int main(){
 	Shape WLSShape = Square;
 	//Shape WLSShape = Rectangle;
 	//Shape WLSShape = Circle;
-	double WLSLength[2] = {23.0,23.0}; // cm. // Square each component is a full length
-	//double WLSLength[2] = {20.0,30.0}; // cm. // Rectangle x,y component are full lengths
+	double WLSLength[2] = {WLSx,WLSx}; // cm. // Square each component is a full length
+	//double WLSLength[2] = {20.0, 30.0}; // cm. // Rectangle x,y component are full lengths
 	//double WLSLength[2] = {14.0,14.0}; // cm. // Circle each component is the radius
 
 	double WLSThickness = 0; // Not used yet (2D approximation)
 	double WLSRefractiveIndex = 1.58;
 	//double criticalAngle = asin(1.33/WLSRefractiveIndex); // if in water
 	double criticalAngle = asin(1./WLSRefractiveIndex); // if in air
-
-	// PMT properties
-	double PMTRadius = 3.8; // cm.
 
 	// Efficiencies for model
 	double WLSEfficiency = 1;
@@ -330,7 +346,11 @@ int main(){
 	int reflect = 0;
 	int status = -1;
 
-	TFile *outfile = new TFile("WLS.root", "RECREATE");
+
+    // Designates a seperate tag for each combination of plate size
+    std::string name = "WLS" + std::to_string(WLSx) + "x" + std::to_string(WLSy) + ".root";
+
+    TFile *outfile = new TFile(name.c_str(), "RECREATE");
 	TTree *tree = new TTree("simulation", "simulation");
 	tree->Branch("posX", &photPosX, "posX/D");
 	tree->Branch("posY", &photPosY, "posY/D");
@@ -396,7 +416,8 @@ int main(){
 
 //--------------------------------------Start of LOOP---------------------------------------------------------------
 	for (int i = 0; i <numPhots; i++){
-        	if (i % 1000 == 0){std::cout << "Generating Photon: " << i << std::endl;}
+            if (i == 0){std::cout << "Plate size: " << WLSLength[0] << " x " << WLSLength[1] << std::endl;}
+        	if (i % 100000 == 0){std::cout << "Generating Photon: " << i << std::endl;}
 		photPosX = 0;
 		photPosY = 0;
 		photPosR = 0;

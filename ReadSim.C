@@ -49,21 +49,25 @@ std::ofstream outfile ("data.txt");
 
 std::cout << "Extracting data..." << std::endl;
 
-for(int i = 26; i <= 110; i++){
-	std::string fileName = "WLS" + std::to_string(i) + ".000000x" + std::to_string(i) + ".000000.root";
+for(int i = 50; i <= 50; i++){ // Square plate size x and y
+    for(int k = 100; k <= 100; k *= 2){ // Attenuation length
+        //std::string fileName = "WLS" + std::to_string(i) + ".000000x" + std::to_string(i) + ".000000.root";
 
-	// Open a ROOT file
-	TFile *f = new TFile(fileName.c_str(), "READ");
+        std::string fileName = "WLS" + std::to_string(i) + ".000000x" + std::to_string(i) + ".000000L" + std::to_string(k) + ".000000.root";
 
-	// Read in the tree
-	//TTree *t = (TTree*) f->Get("simulation");
-	TH1D *h = (TH1D*) f->Get("radiusCapture");
-	TH1D *g = (TH1D*) f->Get("generatedPosCart");
+        // Open a ROOT file
+        TFile *f = new TFile(fileName.c_str(), "READ");
 
-	//std::cout << "Number of entries in the file: " << t->GetEntries() << std::endl;
-	//std::cout << "Number of entries in the hist: " << h->GetEntries() << std::endl;
+        // Read in the tree
+        //TTree *t = (TTree*) f->Get("simulation");
+        TH1D *h = (TH1D*) f->Get("radiusCapture");
+        TH1D *g = (TH1D*) f->Get("generatedPosCart");
 
-	outfile << i << " " << h->GetEntries() << " " << g->GetEntries() << std::endl;
+        //std::cout << "Number of entries in the file: " << t->GetEntries() << std::endl;
+        //std::cout << "Number of entries in the hist: " << h->GetEntries() << std::endl;
+
+        outfile << i << " " << h->GetEntries() << " " << g->GetEntries() << " " << k << std::endl;
+    }
 }
 
 outfile.close();

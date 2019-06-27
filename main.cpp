@@ -308,11 +308,16 @@ int main(int argc, char* argv[]){
         numPhots = 100 * effArea;
     }
 
+    double attL = 100; // attenuation length in cm
+    // Toggle varying attentuation length
+    if(true){
+        attL = atof(argv[3]);
+    }
+
 	bool verbosity = false;
 	int numBounce = 0; // Maximum number of bounces of light to trace
 	int seed = 12345; // Seed for random generator
 	float increment = 0.1; // Value to increment the steps of the photon
-	double attL = 100; // attenuation length in cm
 	int nBin = 56;
 
 	// WLS properties
@@ -354,7 +359,7 @@ int main(int argc, char* argv[]){
 
 
     // Designates a seperate tag for each combination of plate size
-    std::string name = "WLS" + std::to_string(WLSx) + "x" + std::to_string(WLSy) + ".root";
+    std::string name = "WLS" + std::to_string(WLSx) + "x" + std::to_string(WLSy) + "L" + std::to_string(attL) + ".root";
 
     TFile *outfile = new TFile(name.c_str(), "RECREATE");
 	TTree *tree = new TTree("simulation", "simulation");

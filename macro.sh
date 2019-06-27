@@ -5,7 +5,7 @@
 touch data.txt  # Creates an empty txt file IF it does not exits
 echo > data.txt # Empties the txt file
 
-for i in {50..50}
+for ((i = 20; i <= 320; i += 10));
 do
-    ./wls $i.0 $i.0 100
+    ./wls 50.0 50.0 $i.0
 done

@@ -427,7 +427,7 @@ int main(int argc, char* argv[]){
 
 //--------------------------------------Start of LOOP---------------------------------------------------------------
 	for (int i = 0; i <numPhots; i++){
-            if (i == 0){std::cout << "Plate size: " << WLSLength[0] << " x " << WLSLength[1] << std::endl;}
+            if (i == 0){std::cout << "Plate size: " << WLSLength[0] << " x " << WLSLength[1] << ". Attenuation: " << attL << std::endl;}
         	if (i % 100000 == 0){std::cout << "Generating Photon: " << i << std::endl;}
 		photPosX = 0;
 		photPosY = 0;

@@ -50,7 +50,7 @@ std::ofstream outfile ("data.txt");
 std::cout << "Extracting data..." << std::endl;
 
 for(int i = 50; i <= 50; i++){ // Square plate size x and y
-    for(int k = 20; k <= 320; k *= 2){ // Attenuation length
+    for(int k = 20; k <= 320; k += 10){ // Attenuation length
         //std::string fileName = "WLS" + std::to_string(i) + ".000000x" + std::to_string(i) + ".000000.root";
 
         std::string fileName = "WLS" + std::to_string(i) + ".000000x" + std::to_string(i) + ".000000L" + std::to_string(k) + ".000000.root";

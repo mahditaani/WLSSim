@@ -326,12 +326,12 @@ int main(int argc, char* argv[]){
 	int nBin = 56;
 
 	// WLS properties
-	//Shape WLSShape = Square;
+	Shape WLSShape = Square;
 	//Shape WLSShape = Rectangle;
-	Shape WLSShape = Circle;
-	//double WLSLength[2] = {WLSx,WLSx}; // cm. // Square each component is a full length
+	//Shape WLSShape = Circle;
+	double WLSLength[2] = {WLSx,WLSx}; // cm. // Square each component is a full length
 	//double WLSLength[2] = {WLSx, WLSy}; // cm. // Rectangle x,y component are full lengths
-	double WLSLength[2] = {WLSx,WLSx}; // cm. // Circle each component is the radius
+	//double WLSLength[2] = {WLSx,WLSx}; // cm. // Circle each component is the radius
 
 	double WLSThickness = 0; // Not used yet (2D approximation)
 	double WLSRefractiveIndex = 1.58;

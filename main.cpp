@@ -303,12 +303,12 @@ int main(int argc, char* argv[]){
     }
 
     // PMT properties
-	double PMTRadius = 12.7; // cm.
+	double PMTRadius = 14.0; // cm.
 
     // Initiates the number of photons generated
     int numPhots = 1000000;
     // Toggle fixed density for squares and rectangles -> density = 100 photons per square cm
-    if(false){
+    if(true){
         float effArea = ((WLSx * WLSy) - (PI * PMTRadius * PMTRadius));
         numPhots = 100 * effArea;
     }
@@ -320,18 +320,18 @@ int main(int argc, char* argv[]){
     }
 
 	bool verbosity = false;
-	int numBounce = 3; // Maximum number of bounces of light to trace
+	int numBounce = 4; // Maximum number of bounces of light to trace
 	int seed = 12345; // Seed for random generator
 	float increment = 0.1; // Value to increment the steps of the photon
 	int nBin = 56;
 
 	// WLS properties
-	Shape WLSShape = Square;
+	//Shape WLSShape = Square;
 	//Shape WLSShape = Rectangle;
-	//Shape WLSShape = Circle;
-	double WLSLength[2] = {WLSx,WLSx}; // cm. // Square each component is a full length
+	Shape WLSShape = Circle;
+	//double WLSLength[2] = {WLSx,WLSx}; // cm. // Square each component is a full length
 	//double WLSLength[2] = {WLSx, WLSy}; // cm. // Rectangle x,y component are full lengths
-	//double WLSLength[2] = {WLSx,WLSx}; // cm. // Circle each component is the radius
+	double WLSLength[2] = {WLSx/2,WLSx/2}; // cm. // Circle each component is the radius
 
 	double WLSThickness = 0; // Not used yet (2D approximation)
 	double WLSRefractiveIndex = 1.58;

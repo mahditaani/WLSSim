@@ -6,12 +6,6 @@
 #include "TH2D.h"
 #include "TStyle.h"
 
-
-
-
-
-
-
 void SeePlots(){
 	gStyle->SetOptStat(0);
 

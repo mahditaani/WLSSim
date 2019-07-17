@@ -305,14 +305,6 @@ int main(int argc, char* argv[]){
     // PMT properties
 	double PMTRadius = 14.0; // 14.0 cm. = 11" PMT 3.8 cm. = 3" PMT
 
-    // Initiates the number of photons generated
-    int numPhots = 1000000;
-    // Toggle fixed density for squares and rectangles -> density = 100 photons per square cm
-    if(false){
-        float effArea = ((WLSx * WLSy) - (PI * PMTRadius * PMTRadius));
-        numPhots = 100 * effArea;
-    }
-
     double attL = 100; // attenuation length in cm
     // Toggle varying attentuation length
     if(true){
@@ -327,11 +319,11 @@ int main(int argc, char* argv[]){
 
 	// WLS properties
 	//Shape WLSShape = Square;
-	Shape WLSShape = Rectangle;
-	//Shape WLSShape = Circle;
+	//Shape WLSShape = Rectangle;
+	Shape WLSShape = Circle;
 	//double WLSLength[2] = {WLSx,WLSx}; // cm. // Square each component is a full length
-	double WLSLength[2] = {WLSx, WLSy}; // cm. // Rectangle x,y component are full lengths
-	//double WLSLength[2] = {WLSx/2,WLSx/2}; // cm. // Circle each component is the radius
+	//double WLSLength[2] = {WLSx, WLSy}; // cm. // Rectangle x,y component are full lengths
+	double WLSLength[2] = {WLSx,WLSy}; // cm. // Circle each component is the radius
 
 	double WLSThickness = 0; // Not used yet (2D approximation)
 	double WLSRefractiveIndex = 1.58;
@@ -345,6 +337,18 @@ int main(int argc, char* argv[]){
 	// Speed of light in plate
 	double photonSpeed = 299792000/WLSRefractiveIndex; // speed of light in vacuum (m/s) / refractive index
 	photonSpeed *= 100; // m/s into cm/s
+	
+	// Initiates the number of photons generated
+    int numPhots = 1000000;
+    // Toggle fixed density for squares and rectangles -> density = 100 photons per square cm
+    if(true){
+		float effArea;
+		if(WLSShape == Circle){
+			effArea = (PI * (WLSx * WLSx - PMTRadius * PMTRadius));}
+		else{
+			effArea = ((WLSx * WLSy) - (PI * PMTRadius * PMTRadius));}
+        numPhots = 100 * effArea;
+    }
 
 
 	// Really messy way to output to a new file
@@ -613,11 +617,19 @@ int main(int argc, char* argv[]){
 	TH1D *radiusCapture5R = new TH1D("radiusCapture5R", "radiusCapture5R", nBin, 0, WLSLength[0]); // captured photons bouncing 5 times
 	TH1D *radiusCapture6R = new TH1D("radiusCapture6R", "radiusCapture6R", nBin, 0, WLSLength[0]); // captured photons bouncing 6 times
 	TH1D *radiusCapture7R = new TH1D("radiusCapture7R", "radiusCapture7R", nBin, 0, WLSLength[0]); // captured photons bouncing 7 times
-
+	
+	// Quick and dirty way of scaling up the histograms for the circle shape
+	if (WLSShape == Circle){
+		WLSLength[0] = WLSLength[0]*2;
+		WLSLength[1] = WLSLength[1]*2;
+	}
+	
 	TH2D *generatedPosCart = new TH2D("generatedPosCart", "generatedPosCart", nBin, -WLSLength[0]/2, WLSLength[0]/2, nBin, -WLSLength[1]/2, WLSLength[1]/2); // mapping of plate
 	TH2D *generatedDirCart = new TH2D("generatedDirCart", "generatedDirCart", nBin, -WLSLength[0]/2, WLSLength[0]/2, nBin, -WLSLength[1]/2, WLSLength[1]/2); // mapping of plate
 	TH2D *captureMapCart = new TH2D("captureMapCart", "captureMapCart", nBin, -WLSLength[0]/2, WLSLength[0]/2, nBin, -WLSLength[1]/2, WLSLength[1]/2); // mapping of plate
 	TH2D *captureMap = new TH2D("captureMap", "captureMap", nBin, 0, 2*PI, nBin, 0, WLSLength[0]); // mapping of plate
+
+
 
 	radiusHist->Sumw2();
 	radiusCapture->Sumw2();

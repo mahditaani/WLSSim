@@ -20,6 +20,7 @@ Options:
         -u,--uniform            Specify the number of photons to generate per cm^2
         --seed                  Specify a seed for the random number generator
         -b,--bounce             Specify the number of photon bounces to track
+        -m,--mylar              Enables mirrored edges
 
 
 root -l SeePlots.C # To see the heatmaps of file (WLS.root) (change in script)

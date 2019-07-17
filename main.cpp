@@ -58,6 +58,7 @@ void ShowHelpMessage(std::string a){
 			  << "\t-u,--uniform\t\tSpecify the number of photons to generate per cm^2\n"
 			  << "\t--seed\t\t\tSpecify a seed for the random number generator\n"
 			  << "\t-b,--bounce\t\tSpecify the number of photon bounces to track\n"
+			  << "\t-m,--mylar\t\tEnables mirrored edges\n"
               << std::endl;
 
 }
@@ -246,10 +247,10 @@ bool HitEdge(double *p, double *wlsL, Shape shape){
 }
 
 // ReflectPhoton function reverses the direction of the photon hitting an edge. Includes total internal reflection
-bool ReflectPhoton(double *p, double &pDirX, double &pDirY,double *wlsL, Shape shape, double crit, double reflectivity){
+bool ReflectPhoton(double *p, double &pDirX, double &pDirY,double *wlsL, Shape shape, double crit, bool hasMylar){
 
 	bool ref = false;
-	bool mirror = false;
+	bool mirror = hasMylar;
 	bool lost = false;
 
 	p[2] = Angle(p[2]); // Make sure angle is in correct range
@@ -335,6 +336,7 @@ int main(int argc, char* argv[]){
 	
 	bool inWater = false;
 	bool inAir = true;
+	bool mylar = false;
 
 	// Simulation Options
     int numPhots = 1000000; // number of photons to generate
@@ -567,6 +569,10 @@ int main(int argc, char* argv[]){
 			ShowHelpMessage(argv[0]);
 			exit(1);
 		}
+		// Mylar
+		if(std::string(argv[i]) == "-m" || std::string(argv[i]) == "--mylar"){
+			mylar = true;
+		}
 	}
 
 	double increment = 0.1; // Value to increment the steps of the photon
@@ -672,6 +678,7 @@ int main(int argc, char* argv[]){
 	std::cout << "WLS Efficiency:\t"<< WLSEfficiency << std::endl;
 	std::cout << "WLS Reflection:\t"<< WLSReflection << std::endl;
 	std::cout << "WLS Attenuation:\t"<< attL << std::endl;
+	std::cout << "WLS Mylar:\t"<< mylar << std::endl;
 	std::cout << "--------------------------------------" << std::endl;
 	std::cout << "------------PMT PROPERTIES------------" << std::endl;
 	std::cout << "--------------------------------------" << std::endl;
@@ -827,7 +834,7 @@ int main(int argc, char* argv[]){
 			}
 			if ( HitEdge(photonPosTemp, WLSLength, WLSShape)) {
 
-				lost = ReflectPhoton(photonPosTemp, photDirX, photDirY, WLSLength, WLSShape, criticalAngle, WLSReflection);
+				lost = ReflectPhoton(photonPosTemp, photDirX, photDirY, WLSLength, WLSShape, criticalAngle, mylar);
 				if (!lost) {
 					reflect++;
 					status = 1;

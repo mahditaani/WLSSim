@@ -12,6 +12,8 @@
 #include "TFile.h"
 #include "TH1D.h"
 #include "TCanvas.h"
+#include "TH2D.h"
+#include "TTree.h"
 
 // Defines
 #define PI 3.141592654
@@ -106,15 +108,26 @@ void PropagatePhoton(double *p, float i, double pDirX, double pDirY, double *wls
 	double r = sqrt(pow(p[0],2) + pow(p[1],2) );
 	double h = sqrt(pow(r,2) + pow(pmtR,2) ); // distance between the photon and the edge of the PMT forming a right angle with the center of the PMT
 	double ang = asin(pmtR/h); // angle of acceptance above or below the direct angle
+	//double accang = asin(5/h); // limited angle of acceptance above or below the direct angle - imagine the PMT has been limited by black tape
 
 	double directAng = AngToCenter(p[0],p[1]); // direct angle from position to center of PMT.
 	double travelAng = p[2] ;// The angle of travel.
 
 	// Move photon to the center if it is heading for the PMT
 	if (travelAng < directAng + ang && travelAng > directAng -ang) {
-		p[0] = 0;
-		p[1] = 0;
-		dist -= pmtR; // this is to be subtracted because the distance should only count until the edge of the pmt. This code puts the photon in the center so it overshot by pmtR.
+        p[0] = 0;
+        p[1] = 0;
+        dist -= pmtR; // this is to be subtracted because the distance should only count until the edge of the pmt. This code puts the photon in the center so it overshot by pmtR.
+
+        /* Code from the attenuation simulation study
+        if(travelAng < directAng + accang && travelAng > directAng - accang) { // limited angle of acceptance, imagine black tape for a small hole
+            p[0] = 0;
+            p[1] = 0;
+            dist -= pmtR; // this is to be subtracted because the distance should only count until the edge of the pmt. This code puts the photon in the center so it overshot by pmtR.
+        }
+        else{travelAng += PI;} // Otherwise it just inverts its direction
+        */
+
 	}
 
 	p[0] += i*pDirX; // Move photon by (increment)*xDir
@@ -278,30 +291,52 @@ bool ReflectPhoton(double *p, double &pDirX, double &pDirY,double *wlsL, Shape s
 
 // Main function
 
-int main(){
+int main(int argc, char* argv[]){
+
+    // Initiates the main() input parameters
+    float WLSx = 20.0;
+    float WLSy = 30.0;
+    // Toggle input parameteres
+    if(true){
+        WLSx = atof(argv[1]);
+        WLSy = atof(argv[2]);
+    }
+
+    // PMT properties
+	double PMTRadius = 14.0; // cm.
+
+    // Initiates the number of photons generated
+    int numPhots = 1000000;
+    // Toggle fixed density for squares and rectangles -> density = 100 photons per square cm
+    if(true){
+        float effArea = ((WLSx * WLSy) - (PI * PMTRadius * PMTRadius));
+        numPhots = 100 * effArea;
+    }
+
+    double attL = 100; // attenuation length in cm
+    // Toggle varying attentuation length
+    if(true){
+        attL = atof(argv[3]);
+    }
+
 	bool verbosity = false;
-	int numBounce = 7; // Maximum number of bounces of light to trace
-	int numPhots = 1000000; // Number of photons to generate
+	int numBounce = 4; // Maximum number of bounces of light to trace
 	int seed = 12345; // Seed for random generator
 	float increment = 0.1; // Value to increment the steps of the photon
-	double attL = 100; // attenuation length in cm
 	int nBin = 56;
 
 	// WLS properties
-	Shape WLSShape = Square;
+	//Shape WLSShape = Square;
 	//Shape WLSShape = Rectangle;
-	//Shape WLSShape = Circle;
-	double WLSLength[2] = {23.0,23.0}; // cm. // Square each component is a full length
-	//double WLSLength[2] = {20.0,30.0}; // cm. // Rectangle x,y component are full lengths
-	//double WLSLength[2] = {14.0,14.0}; // cm. // Circle each component is the radius
+	Shape WLSShape = Circle;
+	//double WLSLength[2] = {WLSx,WLSx}; // cm. // Square each component is a full length
+	//double WLSLength[2] = {WLSx, WLSy}; // cm. // Rectangle x,y component are full lengths
+	double WLSLength[2] = {WLSx/2,WLSx/2}; // cm. // Circle each component is the radius
 
 	double WLSThickness = 0; // Not used yet (2D approximation)
 	double WLSRefractiveIndex = 1.58;
 	//double criticalAngle = asin(1.33/WLSRefractiveIndex); // if in water
 	double criticalAngle = asin(1./WLSRefractiveIndex); // if in air
-
-	// PMT properties
-	double PMTRadius = 3.8; // cm.
 
 	// Efficiencies for model
 	double WLSEfficiency = 1;
@@ -327,7 +362,11 @@ int main(){
 	int reflect = 0;
 	int status = -1;
 
-	TFile *outfile = new TFile("WLS.root", "RECREATE");
+
+    // Designates a seperate tag for each combination of plate size
+    std::string name = "WLS" + std::to_string(WLSx) + "x" + std::to_string(WLSy) + "L" + std::to_string(attL) + ".root";
+
+    TFile *outfile = new TFile(name.c_str(), "RECREATE");
 	TTree *tree = new TTree("simulation", "simulation");
 	tree->Branch("posX", &photPosX, "posX/D");
 	tree->Branch("posY", &photPosY, "posY/D");
@@ -393,7 +432,8 @@ int main(){
 
 //--------------------------------------Start of LOOP---------------------------------------------------------------
 	for (int i = 0; i <numPhots; i++){
-        	if (i % 1000 == 0){std::cout << "Generating Photon: " << i << std::endl;}
+            if (i == 0){std::cout << "Plate size: " << WLSLength[0] << " x " << WLSLength[1] << ". Attenuation: " << attL << std::endl;}
+        	if (i % 100000 == 0){std::cout << "Generating Photon: " << i << std::endl;}
 		photPosX = 0;
 		photPosY = 0;
 		photPosR = 0;
@@ -413,8 +453,8 @@ int main(){
 				photPosX = distributionPos(generator);
 				photPosY = distributionPos(generator);
 				// On axis
-				//photPosX = 0;
-				//photPosY = distributionPos(generator);
+				//photPosX = 0.0;
+				//photPosY = std::abs(distributionPos(generator));
 				photPosR = sqrt( pow(photPosX,2) + pow(photPosY,2) );
 
 				if (verbosity){
@@ -574,9 +614,9 @@ int main(){
 	TH1D *radiusCapture6R = new TH1D("radiusCapture6R", "radiusCapture6R", nBin, 0, WLSLength[0]); // captured photons bouncing 6 times
 	TH1D *radiusCapture7R = new TH1D("radiusCapture7R", "radiusCapture7R", nBin, 0, WLSLength[0]); // captured photons bouncing 7 times
 
-	TH2D *generatedPosCart = new TH2D("generatedPosCart", "generatedPosCart", nBin, -WLSLength[0]/2, WLSLength[0]/2, nBin, -WLSLength[0]/2, WLSLength[0]/2); // mapping of plate
-	TH2D *generatedDirCart = new TH2D("generatedDirCart", "generatedDirCart", nBin, -WLSLength[0]/2, WLSLength[0]/2, nBin, -WLSLength[0]/2, WLSLength[0]/2); // mapping of plate
-	TH2D *captureMapCart = new TH2D("captureMapCart", "captureMapCart", nBin, -WLSLength[0]/2, WLSLength[0]/2, nBin, -WLSLength[0]/2, WLSLength[0]/2); // mapping of plate
+	TH2D *generatedPosCart = new TH2D("generatedPosCart", "generatedPosCart", nBin, -WLSLength[0]/2, WLSLength[0]/2, nBin, -WLSLength[1]/2, WLSLength[1]/2); // mapping of plate
+	TH2D *generatedDirCart = new TH2D("generatedDirCart", "generatedDirCart", nBin, -WLSLength[0]/2, WLSLength[0]/2, nBin, -WLSLength[1]/2, WLSLength[1]/2); // mapping of plate
+	TH2D *captureMapCart = new TH2D("captureMapCart", "captureMapCart", nBin, -WLSLength[0]/2, WLSLength[0]/2, nBin, -WLSLength[1]/2, WLSLength[1]/2); // mapping of plate
 	TH2D *captureMap = new TH2D("captureMap", "captureMap", nBin, 0, 2*PI, nBin, 0, WLSLength[0]); // mapping of plate
 
 	radiusHist->Sumw2();

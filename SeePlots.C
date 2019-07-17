@@ -15,12 +15,12 @@
 void SeePlots(){
 	gStyle->SetOptStat(0);
 
-	TFile *inFile = new TFile("WLS.root", "READ");
+	TFile *inFile = new TFile("WLS50.000000x50.000000L100.000000.root", "READ");
 	TTree *inTree = (TTree*) inFile->Get("simulation");
 
 	double posX, posY, posR, dirX, dirY, dirT ;
 	int hitPMT, ref;
-	double WLSLength = 50.0;
+	double WLSLength = 100.0;
 	double granularity = 0.5;
 //	double granularity =1;
 

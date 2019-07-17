@@ -151,7 +151,6 @@ void PropagatePhoton(double *p, double i, double pDirX, double pDirY, double *wl
 	double r = sqrt(pow(p[0],2) + pow(p[1],2) );
 	double h = sqrt(pow(r,2) + pow(pmtR,2) ); // distance between the photon and the edge of the PMT forming a right angle with the center of the PMT
 	double ang = asin(pmtR/h); // angle of acceptance above or below the direct angle
-	//double accang = asin(5/h); // limited angle of acceptance above or below the direct angle - imagine the PMT has been limited by black tape
 
 	double directAng = AngToCenter(p[0],p[1]); // direct angle from position to center of PMT.
 	double travelAng = p[2] ;// The angle of travel.
@@ -161,16 +160,6 @@ void PropagatePhoton(double *p, double i, double pDirX, double pDirY, double *wl
         p[0] = 0;
         p[1] = 0;
         dist -= pmtR; // this is to be subtracted because the distance should only count until the edge of the pmt. This code puts the photon in the center so it overshot by pmtR.
-
-        /* Code from the attenuation simulation study
-        if(travelAng < directAng + accang && travelAng > directAng - accang) { // limited angle of acceptance, imagine black tape for a small hole
-            p[0] = 0;
-            p[1] = 0;
-            dist -= pmtR; // this is to be subtracted because the distance should only count until the edge of the pmt. This code puts the photon in the center so it overshot by pmtR.
-        }
-        else{travelAng += PI;} // Otherwise it just inverts its direction
-        */
-
 	}
 
 	p[0] += i*pDirX; // Move photon by (increment)*xDir
@@ -207,7 +196,7 @@ void PropagatePhoton(double *p, double i, double pDirX, double pDirY, double *wl
 	// If the plate is a Circle
 	if (shape == Circle){
 		double r = sqrt(pow(p[0],2) + pow(p[1],2) );
-		int selectedX = 0; // This values will determine which quadratic solution is chosen
+		int selectedX = 0; // This value will determine which quadratic solution is chosen
 		double distTo0 = 0; // This shows how far the current point is to the first quadratic solution
 		double distTo1 = 0; // This shows how far the current point is to the second quadratic solution
 

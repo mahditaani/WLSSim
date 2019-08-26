@@ -64,6 +64,7 @@ double Angle(double x){
 	return x;
 }
 
+
 // A function to figure out the angle from the center
 double AngFromCenter(double x, double y){
 	double ang = 0;
@@ -284,7 +285,7 @@ int main(){
 	int numPhots = 1000000; // Number of photons to generate
 	int seed = 12345; // Seed for random generator
 	float increment = 0.1; // Value to increment the steps of the photon
-	double attL = 100; // attenuation length in cm
+	double attL = 1e16; // attenuation length in cm
 	int nBin = 56;
 
 	// WLS properties

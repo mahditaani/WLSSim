@@ -1,12 +1,28 @@
 # This is a program to simulate the propagation of a photon in a wavelength shifter
 
-# USAGE
-root -l main.cpp # To run the simulation
-root -l SeePlots.C # To see the heatmaps
+# BUILD
+Ensure that the ROOTSYS environment variable is set
+./compile 
 
-# Variables
-numPhots	Number of photons to simulate
-numBounce	Maximum number of reflections to simulate
-PMTRadius	Radius of the PMT
-WLSLength	Full length of the WLS edge
+# Usage
+Usage: ./wls <option(s)
+Options:
+        -h,--help               Show this help message
+        -s,--shape              Specify the shape of the plate
+        -p,--pmtradius          Specify the PMT radius [cm]
+        -x,--platex             Specify the x length of the plate [cm]
+        -y,--platey             Specify the y length of the plate [cm]
+        -a,--attenuation        Specify the attenuation length of the plate [cm]
+        -n,--numphots           Specify the number of photons to generate in the plate
+        --air                   The plate is immersed in air
+        --water                 The plate is immersed in water
+        -v,--verbosity          Enables verbose mode
+        -u,--uniform            Specify the number of photons to generate per cm^2
+        --seed                  Specify a seed for the random number generator
+        -b,--bounce             Specify the number of photon bounces to track
+        -m,--mylar              Enables mirrored edges
+
+
+root -l SeePlots.C # To see the heatmaps of file (WLS.root) (change in script)
+
 

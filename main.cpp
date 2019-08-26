@@ -7,11 +7,14 @@
 #include <vector>
 #include <random>
 #include <cmath>
+#include <exception>
 
 // ROOT Includes
 #include "TFile.h"
 #include "TH1D.h"
 #include "TCanvas.h"
+#include "TH2D.h"
+#include "TTree.h"
 
 // Defines
 #define PI 3.141592654
@@ -39,6 +42,26 @@ enum Shape {
 	Rectangle
 }; // Enumeration to hold the different WLS shapes
 
+void ShowHelpMessage(std::string a){
+   std::cerr << "Usage: " << a << " <option(s)\n"
+              << "Options:\n"
+              << "\t-h,--help\t\tShow this help message\n"
+			  << "\t-s,--shape\t\tSpecify the shape of the plate\n"
+			  << "\t-p,--pmtradius\t\tSpecify the PMT radius [cm]\n"
+			  << "\t-x,--platex\t\tSpecify the x length of the plate [cm]\n"
+			  << "\t-y,--platey\t\tSpecify the y length of the plate [cm]\n"
+			  << "\t-a,--attenuation\tSpecify the attenuation length of the plate [cm]\n"
+			  << "\t-n,--numphots\t\tSpecify the number of photons to generate in the plate\n"
+			  << "\t--air\t\t\tThe plate is immersed in air\n"
+			  << "\t--water\t\t\tThe plate is immersed in water\n"
+			  << "\t-v,--verbosity\t\tEnables verbose mode\n"
+			  << "\t-u,--uniform\t\tSpecify the number of photons to generate per cm^2\n"
+			  << "\t--seed\t\t\tSpecify a seed for the random number generator\n"
+			  << "\t-b,--bounce\t\tSpecify the number of photon bounces to track\n"
+			  << "\t-m,--mylar\t\tEnables mirrored edges\n"
+              << std::endl;
+
+}
 // A function to see if two values are roughly equal
 bool RoughlyEqual(double a, double b){
 	double tolerance = 0.001;
@@ -46,9 +69,32 @@ bool RoughlyEqual(double a, double b){
   	return true;}
   else { return false;}
  }
+
+// A function to check that the input is a double
+bool StringIsDouble(std::string a){
+	bool value = true;
+	try{
+		double f = std::stod(a);
+	}catch(std::exception& ia){
+		value = false;
+	}
+	return value;
+
+}
+// A function to check that the input is an int
+bool StringIsInt(std::string a){
+	bool value = true;
+	try{
+		int f = std::stoi(a);
+	}catch(std::exception& ia){
+		value = false;
+	}
+	return value;
+
+}
 // A function to see if the photon has died or not
  bool IsAttenuated(double d, double lambda){
-	 if ( ProbabilityGen(gen) >= exp(-1*d/lambda) )
+	 if ( lambda != -1 && ProbabilityGen(gen) >= exp(-1*d/lambda) )
 	 {return true;}
 	 else {return false;}
  }
@@ -97,7 +143,7 @@ bool IsCrit(double angDir, double angle, double crit){
 }
 
 // The PropagatePhoton function moves the photon and makes sure it is always in bounds.
-void PropagatePhoton(double *p, float i, double pDirX, double pDirY, double *wlsL, double pmtR, Shape shape, double &dist){
+void PropagatePhoton(double *p, double i, double pDirX, double pDirY, double *wlsL, double pmtR, Shape shape, double &dist){
 
 	// Variables used to work out the travel distance
 	double startX = p[0];
@@ -113,9 +159,9 @@ void PropagatePhoton(double *p, float i, double pDirX, double pDirY, double *wls
 
 	// Move photon to the center if it is heading for the PMT
 	if (travelAng < directAng + ang && travelAng > directAng -ang) {
-		p[0] = 0;
-		p[1] = 0;
-		dist -= pmtR; // this is to be subtracted because the distance should only count until the edge of the pmt. This code puts the photon in the center so it overshot by pmtR.
+        p[0] = 0;
+        p[1] = 0;
+        dist -= pmtR; // this is to be subtracted because the distance should only count until the edge of the pmt. This code puts the photon in the center so it overshot by pmtR.
 	}
 
 	p[0] += i*pDirX; // Move photon by (increment)*xDir
@@ -152,7 +198,7 @@ void PropagatePhoton(double *p, float i, double pDirX, double pDirY, double *wls
 	// If the plate is a Circle
 	if (shape == Circle){
 		double r = sqrt(pow(p[0],2) + pow(p[1],2) );
-		int selectedX = 0; // This values will determine which quadratic solution is chosen
+		int selectedX = 0; // This value will determine which quadratic solution is chosen
 		double distTo0 = 0; // This shows how far the current point is to the first quadratic solution
 		double distTo1 = 0; // This shows how far the current point is to the second quadratic solution
 
@@ -202,10 +248,10 @@ bool HitEdge(double *p, double *wlsL, Shape shape){
 }
 
 // ReflectPhoton function reverses the direction of the photon hitting an edge. Includes total internal reflection
-bool ReflectPhoton(double *p, double &pDirX, double &pDirY,double *wlsL, Shape shape, double crit, double reflectivity){
+bool ReflectPhoton(double *p, double &pDirX, double &pDirY,double *wlsL, Shape shape, double crit, bool hasMylar){
 
 	bool ref = false;
-	bool mirror = false;
+	bool mirror = hasMylar;
 	bool lost = false;
 
 	p[2] = Angle(p[2]); // Make sure angle is in correct range
@@ -279,30 +325,296 @@ bool ReflectPhoton(double *p, double &pDirX, double &pDirY,double *wlsL, Shape s
 
 // Main function
 
-int main(){
-	bool verbosity = false;
-	int numBounce = 7; // Maximum number of bounces of light to trace
-	int numPhots = 1000000; // Number of photons to generate
+int main(int argc, char* argv[]){
+
+    // Plate Options
+    double WLSx = 23.0;
+    double WLSy = 23.0;
+	double attL = -1; // attenuation length in cm (-1 means no attenuation)
+	double PMTRadius = 3.8; // cm.
+	Shape WLSShape = Square;
+	std::string shape = "square";
+	
+	bool inWater = false;
+	bool inAir = true;
+	bool mylar = false;
+
+	// Simulation Options
+    int numPhots = 1000000; // number of photons to generate
+	bool verbosity = false; 
+	bool uniform = false; // toggle uniform density of photons
+
+	int numBounce = 4; // Maximum number of bounces of light to trace
 	int seed = 12345; // Seed for random generator
-	float increment = 0.1; // Value to increment the steps of the photon
-	double attL = 1e16; // attenuation length in cm
+	
+	for (int i = 1; i < argc; i++){
+
+		// Shape option
+		if (std::string(argv[i]) == "-s" || std::string(argv[i]) == "--shape") {
+            if (i + 1 < argc) { // Make sure we aren't at the end of argv!
+				if( std::string(argv[i+1]) ==  "Square" ||
+				  	std::string(argv[i+1]) ==  "square") {
+					i++; // don't check next argument
+					WLSShape = Square;
+					shape = "square";
+				} 
+				else if (	std::string(argv[i+1]) ==  "Rectangle" ||
+				  			std::string(argv[i+1]) ==  "rectangle" ){
+					
+					i++; // don't check next argument
+					WLSShape = Rectangle;
+					shape = "rectangle";
+				}  
+				else if (	std::string(argv[i+1]) ==  "Circle" ||
+				  			std::string(argv[i+1]) ==  "circle") {
+
+					i++; // don't check next argument
+					WLSShape = Circle;
+					shape = "circle";
+				} else {
+					std::cerr << "--shape option has an invalid argument. Options are Square, Circle or Rectangle." << std::endl;
+					exit(1);
+
+				}
+					  
+					  
+                 
+            } else { // Uh-oh, there was no argument to the destination option.
+                  std::cerr << "--shape option requires one argument." << std::endl;
+                exit(1);
+            }  
+        }
+
+		// PMTradius option
+		if (std::string(argv[i]) == "-p" || std::string(argv[i]) == "--pmtradius") {
+            if (i + 1 < argc) { // Make sure we aren't at the end of argv!
+				if( StringIsDouble( std::string(argv[i+1]) ) ) {
+					PMTRadius = std::stod( argv[i+1] );
+					i++; // don't check next argument
+					if (PMTRadius <= 0){
+						std::cerr << "--pmtradius option has an invalid argument. Value must be larger than 0." << std::endl;
+						exit(1);
+					}
+				} 
+				else {
+					std::cerr << "--pmtradius option has an invalid argument. Options must be a number larger than 0." << std::endl;
+					exit(1);
+				}                 
+            } else { // Uh-oh, there was no argument to the destination option.
+                  std::cerr << "--pmtradius option requires one argument." << std::endl;
+                exit(1);
+            }  
+        }
+
+		// PlateX option
+		if (std::string(argv[i]) == "-x" || std::string(argv[i]) == "--platex") {
+            if (i + 1 < argc) { // Make sure we aren't at the end of argv!
+				if( StringIsDouble( std::string(argv[i+1]) ) ) {
+					WLSx = std::stod( argv[i+1] );
+					i++; // don't check next argument
+					if (WLSx <= 0){
+						std::cerr << "--x option has an invalid argument. Value must be larger than 0." << std::endl;
+						exit(1);
+					}
+				} 
+				else {
+					std::cerr << "--x option has an invalid argument. Options must be a number larger than 0." << std::endl;
+					exit(1);
+				}                 
+            } else { // Uh-oh, there was no argument to the destination option.
+                  std::cerr << "--x option requires one argument." << std::endl;
+                exit(1);
+            }  
+        }
+
+		// PlateY option
+		if (std::string(argv[i]) == "-y" || std::string(argv[i]) == "--platey") {
+            if (i + 1 < argc) { // Make sure we aren't at the end of argv!
+				if( StringIsDouble( std::string(argv[i+1]) ) ) {
+					WLSy = std::stod( argv[i+1] );
+					i++; // don't check next argument
+					if (WLSy <= 0){
+						std::cerr << "--y option has an invalid argument. Value must be larger than 0." << std::endl;
+						exit(1);
+					}
+				} 
+				else {
+					std::cerr << "--y option has an invalid argument. Options must be a number larger than 0." << std::endl;
+					exit(1);
+				}                 
+            } else { // Uh-oh, there was no argument to the destination option.
+                  std::cerr << "--y option requires one argument." << std::endl;
+                exit(1);
+            }  
+        }
+
+		// Attenuation option
+		if (std::string(argv[i]) == "-a" || std::string(argv[i]) == "--attenuation") {
+            if (i + 1 < argc) { // Make sure we aren't at the end of argv!
+				if( StringIsDouble( std::string(argv[i+1]) ) ) {
+					attL = std::stod( argv[i+1] );
+					i++; // don't check next argument
+					if (attL <= 0){
+						std::cerr << "--attenuation option has an invalid argument. Value must be larger than 0." << std::endl;
+						exit(1);
+					}
+				} 
+				else {
+					std::cerr << "--attenuation option has an invalid argument. Options must be a number larger than 0." << std::endl;
+					exit(1);
+				}                 
+            } else { // Uh-oh, there was no argument to the destination option.
+                  std::cerr << "--attenuation option requires one argument." << std::endl;
+                exit(1);
+            }  
+        }
+
+		// Number of Photons option
+		if (std::string(argv[i]) == "-n" || std::string(argv[i]) == "--numphots") {
+            if (i + 1 < argc) { // Make sure we aren't at the end of argv!
+				if( StringIsInt( std::string(argv[i+1]) ) ) {
+					numPhots = std::stoi( argv[i+1] );
+					i++; // don't check next argument
+					if (numPhots <= 0){
+						std::cerr << "--n option has an invalid argument. Value must be larger than 0." << std::endl;
+						exit(1);
+					}
+				} 
+				else {
+					std::cerr << "--n option has an invalid argument. Options must be an integer larger than 0." << std::endl;
+					exit(1);
+				}                 
+            } else { // Uh-oh, there was no argument to the destination option.
+                  std::cerr << "--n option requires one argument." << std::endl;
+                exit(1);
+            }  
+        }
+		// Air
+		if(std::string(argv[i]) == "--air"){
+			inAir = true;
+			inWater = !inAir;
+		}
+		// Water
+		if(std::string(argv[i]) == "--water"){
+			inWater = true;
+			inAir = !inWater;
+		}
+		// Verbosity
+		if(std::string(argv[i]) == "-v" || std::string(argv[i]) == "--verbosity"){
+			verbosity = true;
+		}
+		// Uniformity
+		if (std::string(argv[i]) == "-u" || std::string(argv[i]) == "--uniform") {
+            if (i + 1 < argc) { // Make sure we aren't at the end of argv!
+				if( StringIsInt( std::string(argv[i+1]) ) ) {
+					numPhots = std::stoi( argv[i+1] );
+					i++; // don't check next argument
+					uniform = true;
+					if (numPhots <= 0){
+						std::cerr << "--u option has an invalid argument. Value must be larger than 0." << std::endl;
+						exit(1);
+					}
+				} 
+				else {
+					std::cerr << "--u option has an invalid argument. Options must be an integer larger than 0." << std::endl;
+					exit(1);
+				}                 
+            } else { // Uh-oh, there was no argument to the destination option.
+                  std::cerr << "--u option requires one argument." << std::endl;
+                exit(1);
+            }  
+        }
+		// Seed
+		if (std::string(argv[i]) == "--seed") {
+            if (i + 1 < argc) { // Make sure we aren't at the end of argv!
+				if( StringIsInt( std::string(argv[i+1]) ) ) {
+					seed = std::stoi( argv[i+1] );
+					i++; // don't check next argument
+					if (seed <= 0){
+						std::cerr << "--seed option has an invalid argument. Value must be larger than 0." << std::endl;
+						exit(1);
+					}
+				} 
+				else {
+					std::cerr << "--seed option has an invalid argument. Options must be an integer larger than 0." << std::endl;
+					exit(1);
+				}                 
+            } else { // Uh-oh, there was no argument to the destination option.
+                  std::cerr << "--seed option requires one argument." << std::endl;
+                exit(1);
+            }  
+        }
+
+		// NumBounces
+		if (std::string(argv[i]) == "-b" || std::string(argv[i]) == "--bounce") {
+            if (i + 1 < argc) { // Make sure we aren't at the end of argv!
+				if( StringIsInt( std::string(argv[i+1]) ) ) {
+					numBounce = std::stoi( argv[i+1] );
+					i++; // don't check next argument
+					if (numBounce <= 0){
+						std::cerr << "--bounce option has an invalid argument. Value must be larger than 0." << std::endl;
+						exit(1);
+					}
+				} 
+				else {
+					std::cerr << "--bounce option has an invalid argument. Options must be an integer larger than 0." << std::endl;
+					exit(1);
+				}                 
+            } else { // Uh-oh, there was no argument to the destination option.
+                  std::cerr << "--bounce option requires one argument." << std::endl;
+                exit(1);
+            }  
+        }
+		// Help
+		if(std::string(argv[i]) == "-h" || std::string(argv[i]) == "--help"){
+			ShowHelpMessage(argv[0]);
+			exit(1);
+		}
+		// Mylar
+		if(std::string(argv[i]) == "-m" || std::string(argv[i]) == "--mylar"){
+			mylar = true;
+		}
+	}
+
+	double increment = 0.1; // Value to increment the steps of the photon
 	int nBin = 56;
 
-	// WLS properties
-	Shape WLSShape = Square;
-	//Shape WLSShape = Rectangle;
-	//Shape WLSShape = Circle;
-	double WLSLength[2] = {23.0,23.0}; // cm. // Square each component is a full length
-	//double WLSLength[2] = {20.0,30.0}; // cm. // Rectangle x,y component are full lengths
-	//double WLSLength[2] = {14.0,14.0}; // cm. // Circle each component is the radius
+	double WLSLength[2];
+	if (WLSShape == Square) {// cm. // Square each component is a full length
+		WLSLength[0] = WLSx;
+		WLSLength[1] = WLSx;
+
+	} else if (WLSShape == Rectangle) {// cm. // Rectangle x,y component are full lengths
+		WLSLength[0] = WLSx;
+		WLSLength[1] = WLSy;
+	} else if (WLSShape == Circle){// cm. // Circle each component is the radius
+		WLSLength[0] = WLSx/2;
+		WLSLength[1] = WLSx/2;
+	}
+
+	// Some checks
+	if (PMTRadius > WLSLength[0]/2 ||  PMTRadius > WLSLength[1]/2) {
+		std::cerr << "PMT is larger than the plate." << std::endl;
+		exit(1);
+	}
+    	
+
+   // Toggle fixed density for squares and rectangles -> density = numPhots per square cm
+    if(uniform){
+		if (WLSShape == Square || WLSShape == Rectangle){
+			double effArea = ((WLSLength[0] * WLSLength[1]) - (PI * PMTRadius * PMTRadius));
+			numPhots *= (int)effArea;
+		} else {
+			double effArea = ((PI*WLSLength[0] * WLSLength[0]) - (PI * PMTRadius * PMTRadius));
+			numPhots *= (int)effArea;
+		}
+    }
 
 	double WLSThickness = 0; // Not used yet (2D approximation)
 	double WLSRefractiveIndex = 1.58;
-	//double criticalAngle = asin(1.33/WLSRefractiveIndex); // if in water
-	double criticalAngle = asin(1./WLSRefractiveIndex); // if in air
-
-	// PMT properties
-	double PMTRadius = 3.8; // cm.
+	double criticalAngle;
+	if (inWater){criticalAngle = asin(1.33/WLSRefractiveIndex);}
+	if (inAir){criticalAngle = asin(1./WLSRefractiveIndex);}
 
 	// Efficiencies for model
 	double WLSEfficiency = 1;
@@ -328,7 +640,11 @@ int main(){
 	int reflect = 0;
 	int status = -1;
 
-	TFile *outfile = new TFile("WLS.root", "RECREATE");
+
+    // Designates a seperate tag for each combination of plate size
+    std::string name = "WLS_" + shape + "_" + std::to_string(WLSLength[0]) + "x" + std::to_string(WLSLength[1]) + "L" + std::to_string(attL) + ".root";
+
+    TFile *outfile = new TFile(name.c_str(), "RECREATE");
 	TTree *tree = new TTree("simulation", "simulation");
 	tree->Branch("posX", &photPosX, "posX/D");
 	tree->Branch("posY", &photPosY, "posY/D");
@@ -343,30 +659,33 @@ int main(){
 	tree->Branch("status", &status, "status/I");
 
 
-	if (verbosity){
-		std::cout << "--------------------------------------" << std::endl;
-		std::cout << "------------SETTINGS------------------" << std::endl;
-		std::cout << "--------------------------------------" << std::endl;
-		std::cout << "Number of Bounces:\t"<< numBounce << std::endl;
-		std::cout << "Number of Photons:\t"<< numPhots << std::endl;
-		std::cout << "Random Generator Seed:\t"<< seed << std::endl;
-		std::cout << "Increment:\t"<< increment << std::endl;
-		std::cout << "Number of Photons:\t"<< numPhots << std::endl;
-		std::cout << "Number of Photons:\t"<< numPhots << std::endl;
-		std::cout << "--------------------------------------" << std::endl;
-		std::cout << "------------WLS PROPERTIES------------" << std::endl;
-		std::cout << "--------------------------------------" << std::endl;
-		std::cout << "WLS Length:\t"<< WLSLength << std::endl;
-		std::cout << "WLS RI:\t"<< WLSRefractiveIndex << std::endl;
-		std::cout << "WLS Efficiency:\t"<< WLSEfficiency << std::endl;
-		std::cout << "WLS Reflection:\t"<< WLSReflection << std::endl;
-		std::cout << "--------------------------------------" << std::endl;
-		std::cout << "------------PMT PROPERTIES------------" << std::endl;
-		std::cout << "--------------------------------------" << std::endl;
-		std::cout << "PMT Radius:\t"<< PMTRadius << std::endl;
-		std::cout << "--------------------------------------" << std::endl;
-		std::cout << "--------------------------------------" << std::endl;
-	}
+	
+	std::cout << "--------------------------------------" << std::endl;
+	std::cout << "------------SETTINGS------------------" << std::endl;
+	std::cout << "--------------------------------------" << std::endl;
+	std::cout << "Number of Bounces:\t"<< numBounce << std::endl;
+	std::cout << "Number of Photons:\t"<< numPhots << std::endl;
+	std::cout << "Random Generator Seed:\t"<< seed << std::endl;
+	std::cout << "Increment:\t"<< increment << std::endl;
+	std::cout << "Water:\t"<< inWater << std::endl;
+	std::cout << "Air:\t"<< inAir << std::endl;
+	std::cout << "--------------------------------------" << std::endl;
+	std::cout << "------------WLS PROPERTIES------------" << std::endl;
+	std::cout << "--------------------------------------" << std::endl;
+	std::cout << "WLS Shape:\t"<< shape << std::endl;
+	std::cout << "WLS Length[x]:\t"<< WLSLength[0] << std::endl;
+	std::cout << "WLS Length[y]:\t"<< WLSLength[1] << std::endl;
+	std::cout << "WLS RI:\t"<< WLSRefractiveIndex << std::endl;
+	std::cout << "WLS Efficiency:\t"<< WLSEfficiency << std::endl;
+	std::cout << "WLS Reflection:\t"<< WLSReflection << std::endl;
+	std::cout << "WLS Attenuation:\t"<< attL << std::endl;
+	std::cout << "WLS Mylar:\t"<< mylar << std::endl;
+	std::cout << "--------------------------------------" << std::endl;
+	std::cout << "------------PMT PROPERTIES------------" << std::endl;
+	std::cout << "--------------------------------------" << std::endl;
+	std::cout << "PMT Radius:\t"<< PMTRadius << std::endl;
+	std::cout << "--------------------------------------" << std::endl;
+	std::cout << "--------------------------------------" << std::endl;
 
 	std::vector<Phot> PhotonVector;
 	// Generate a point in the WLS
@@ -394,7 +713,8 @@ int main(){
 
 //--------------------------------------Start of LOOP---------------------------------------------------------------
 	for (int i = 0; i <numPhots; i++){
-        	if (i % 1000 == 0){std::cout << "Generating Photon: " << i << std::endl;}
+            if (i == 0){std::cout << "Plate size: " << WLSLength[0] << " x " << WLSLength[1] << ". Attenuation: " << attL << std::endl;}
+        	if (i % 100000 == 0){std::cout << "Generating Photon: " << i << std::endl;}
 		photPosX = 0;
 		photPosY = 0;
 		photPosR = 0;
@@ -414,8 +734,8 @@ int main(){
 				photPosX = distributionPos(generator);
 				photPosY = distributionPos(generator);
 				// On axis
-				//photPosX = 0;
-				//photPosY = distributionPos(generator);
+				//photPosX = 0.0;
+				//photPosY = std::abs(distributionPos(generator));
 				photPosR = sqrt( pow(photPosX,2) + pow(photPosY,2) );
 
 				if (verbosity){
@@ -515,7 +835,7 @@ int main(){
 			}
 			if ( HitEdge(photonPosTemp, WLSLength, WLSShape)) {
 
-				lost = ReflectPhoton(photonPosTemp, photDirX, photDirY, WLSLength, WLSShape, criticalAngle, WLSReflection);
+				lost = ReflectPhoton(photonPosTemp, photDirX, photDirY, WLSLength, WLSShape, criticalAngle, mylar);
 				if (!lost) {
 					reflect++;
 					status = 1;
@@ -575,9 +895,9 @@ int main(){
 	TH1D *radiusCapture6R = new TH1D("radiusCapture6R", "radiusCapture6R", nBin, 0, WLSLength[0]); // captured photons bouncing 6 times
 	TH1D *radiusCapture7R = new TH1D("radiusCapture7R", "radiusCapture7R", nBin, 0, WLSLength[0]); // captured photons bouncing 7 times
 
-	TH2D *generatedPosCart = new TH2D("generatedPosCart", "generatedPosCart", nBin, -WLSLength[0]/2, WLSLength[0]/2, nBin, -WLSLength[0]/2, WLSLength[0]/2); // mapping of plate
-	TH2D *generatedDirCart = new TH2D("generatedDirCart", "generatedDirCart", nBin, -WLSLength[0]/2, WLSLength[0]/2, nBin, -WLSLength[0]/2, WLSLength[0]/2); // mapping of plate
-	TH2D *captureMapCart = new TH2D("captureMapCart", "captureMapCart", nBin, -WLSLength[0]/2, WLSLength[0]/2, nBin, -WLSLength[0]/2, WLSLength[0]/2); // mapping of plate
+	TH2D *generatedPosCart = new TH2D("generatedPosCart", "generatedPosCart", nBin, -WLSLength[0]/2, WLSLength[0]/2, nBin, -WLSLength[1]/2, WLSLength[1]/2); // mapping of plate
+	TH2D *generatedDirCart = new TH2D("generatedDirCart", "generatedDirCart", nBin, -WLSLength[0]/2, WLSLength[0]/2, nBin, -WLSLength[1]/2, WLSLength[1]/2); // mapping of plate
+	TH2D *captureMapCart = new TH2D("captureMapCart", "captureMapCart", nBin, -WLSLength[0]/2, WLSLength[0]/2, nBin, -WLSLength[1]/2, WLSLength[1]/2); // mapping of plate
 	TH2D *captureMap = new TH2D("captureMap", "captureMap", nBin, 0, 2*PI, nBin, 0, WLSLength[0]); // mapping of plate
 
 	radiusHist->Sumw2();

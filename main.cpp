@@ -339,6 +339,7 @@ int main(int argc, char* argv[]){
 	bool inAir = true;
 	bool mylar = false;
 	bool line = false;
+	bool prop3d = false;
 
 	// Simulation Options
     int numPhots = 1000000; // number of photons to generate
@@ -503,6 +504,10 @@ int main(int argc, char* argv[]){
 		// On axis
 		if(std::string(argv[i]) == "--line"){
 			line = true;
+		}
+		// 3D propagation (just scale 2D by giving it an additional angle)
+		if(std::string(argv[i]) == "--p3"){
+			prop3d = true;
 		}
 		// Verbosity
 		if(std::string(argv[i]) == "-v" || std::string(argv[i]) == "--verbosity"){
@@ -702,6 +707,7 @@ int main(int argc, char* argv[]){
 	std::uniform_real_distribution<double> distributionPosY;
 	std::uniform_real_distribution<double> distributionPosR;
 	std::normal_distribution<double> distributionWidth(0., 0.2);
+	std::uniform_real_distribution<double> distribution3DProp(0., criticalAngle);
 
 	if (WLSShape == Square){
 	distributionPos = std::uniform_real_distribution<double> (-WLSLength[0]/2,WLSLength[0]/2);
@@ -864,7 +870,10 @@ int main(int argc, char* argv[]){
 
 				}
 			}
-
+		if (prop3d){
+			// scale the distance according to 3D propagation
+			dist /= 1/cos(distribution3DProp(generator));
+		}
 		attenuated = IsAttenuated(dist, attL); // checks to see if the photon survived
 		if (attenuated){status = 2; hitPMT = false; hPMT = 0;}
 

@@ -46,6 +46,7 @@ void ShowHelpMessage(std::string a){
    std::cerr << "Usage: " << a << " <option(s)\n"
               << "Options:\n"
               << "\t-h,--help\t\tShow this help message\n"
+			  << "\t--fname\t\t\tChoose a filename\n"
 			  << "\t-s,--shape\t\tSpecify the shape of the plate\n"
 			  << "\t-p,--pmtradius\t\tSpecify the PMT radius [cm]\n"
 			  << "\t-x,--platex\t\tSpecify the x length of the plate [cm]\n"
@@ -63,6 +64,18 @@ void ShowHelpMessage(std::string a){
 			  << "\t-m,--mylar\t\tEnables mirrored edges\n"
               << std::endl;
 
+}
+
+bool HasRootExt(std::string a){
+	std::string test;
+	int strL = a.length();
+	int startPoint = strL - 5;
+	for (int i= startPoint; i< strL; i++)
+	{
+		test += a.at(i);
+	}
+	if (test == ".root") return true;
+	else return false;
 }
 // A function to see if two values are roughly equal
 bool RoughlyEqual(double a, double b){
@@ -342,6 +355,8 @@ int main(int argc, char* argv[]){
 	bool mylar = false;
 	bool line = false;
 	bool prop3d = false;
+	bool chosenName = false;
+	std::string fileName;
 
 	// Simulation Options
     int numPhots = 1000000; // number of photons to generate
@@ -490,6 +505,23 @@ int main(int argc, char* argv[]){
 				}                 
             } else { // Uh-oh, there was no argument to the destination option.
                   std::cerr << "--n option requires one argument." << std::endl;
+                exit(1);
+            }  
+        }
+		// Shape option
+		if (std::string(argv[i]) == "--fname") {
+            if (i + 1 < argc) { // Make sure we aren't at the end of argv!
+				if( HasRootExt(std::string(argv[i+1]))) {
+					i++; // don't check next argument
+					fileName = std::string(argv[i+1]);
+					chosenName = true;
+				} else {
+					std::cerr << "--fname option has an invalid argument. Option must be a root filename e.g. file.root" << std::endl;
+					exit(1);
+				}
+					  
+            } else { // Uh-oh, there was no argument to the destination option.
+                  std::cerr << "--fname option requires one argument." << std::endl;
                 exit(1);
             }  
         }
@@ -653,10 +685,13 @@ int main(int argc, char* argv[]){
 	int status = -1;
 
 
-    // Designates a seperate tag for each combination of plate size
-    std::string name = "WLS_" + shape + "_" + std::to_string(WLSLength[0]) + "x" + std::to_string(WLSLength[1]) + "L" + std::to_string(attL) + ".root";
+	if (!chosenName){
+    	// Designates a seperate tag for each combination of plate size
+    	fileName = "WLS_" + shape + "_" + std::to_string(WLSLength[0]) + "x" + 	std::to_string(WLSLength[1]) + "L" + std::to_string(attL) + ".root";
+	} 
 
-    TFile *outfile = new TFile(name.c_str(), "RECREATE");
+
+    TFile *outfile = new TFile(fileName.c_str(), "RECREATE");
 	TTree *tree = new TTree("simulation", "simulation");
 	tree->Branch("posX", &photPosX, "posX/D");
 	tree->Branch("posY", &photPosY, "posY/D");

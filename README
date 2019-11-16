@@ -8,6 +8,7 @@ Ensure that the ROOTSYS environment variable is set
 Usage: ./wls <option(s)
 Options:
         -h,--help               Show this help message
+        --fname                 Choose a filename
         -s,--shape              Specify the shape of the plate
         -p,--pmtradius          Specify the PMT radius [cm]
         -x,--platex             Specify the x length of the plate [cm]

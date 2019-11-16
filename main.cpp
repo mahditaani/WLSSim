@@ -338,6 +338,7 @@ int main(int argc, char* argv[]){
 	bool inWater = false;
 	bool inAir = true;
 	bool mylar = false;
+	bool line = false;
 
 	// Simulation Options
     int numPhots = 1000000; // number of photons to generate
@@ -498,6 +499,10 @@ int main(int argc, char* argv[]){
 		if(std::string(argv[i]) == "--water"){
 			inWater = true;
 			inAir = !inWater;
+		}
+		// On axis
+		if(std::string(argv[i]) == "--line"){
+			line = true;
 		}
 		// Verbosity
 		if(std::string(argv[i]) == "-v" || std::string(argv[i]) == "--verbosity"){
@@ -696,6 +701,7 @@ int main(int argc, char* argv[]){
 	std::uniform_real_distribution<double> distributionPosX;
 	std::uniform_real_distribution<double> distributionPosY;
 	std::uniform_real_distribution<double> distributionPosR;
+	std::normal_distribution<double> distributionWidth(0., 0.2);
 
 	if (WLSShape == Square){
 	distributionPos = std::uniform_real_distribution<double> (-WLSLength[0]/2,WLSLength[0]/2);
@@ -731,13 +737,17 @@ int main(int argc, char* argv[]){
 		if (WLSShape == Square){
 			while (!inPlate) {
 				// Across the whole plate
-				photPosX = distributionPos(generator);
-				photPosY = distributionPos(generator);
+				if (!line){
+					photPosX = distributionPosX(generator);
+					photPosY = distributionPosY(generator);
+				}
 				// On axis
-				//photPosX = 0.0;
-				//photPosY = std::abs(distributionPos(generator));
-				photPosR = sqrt( pow(photPosX,2) + pow(photPosY,2) );
-
+				if (line){
+					//photPosX = 0.0;
+					photPosX = distributionWidth(generator);
+					photPosY = std::abs(distributionPosY(generator));
+					photPosR = sqrt( pow(photPosX,2) + pow(photPosY,2) );
+				}
 				if (verbosity){
 					std::cout << "Generated a point (x y):\t" << photPosX << " " << photPosY << std::endl;
 				}
@@ -752,13 +762,17 @@ int main(int argc, char* argv[]){
 		if (WLSShape == Rectangle){
 			while (!inPlate) {
 				// Across the whole plate
-				photPosX = distributionPosX(generator);
-				photPosY = distributionPosY(generator);
+				if (!line){
+					photPosX = distributionPosX(generator);
+					photPosY = distributionPosY(generator);
+				}
 				// On axis
-				//photPosX = 0;
-				//photPosY = distributionPos(generator);
-				photPosR = sqrt( pow(photPosX,2) + pow(photPosY,2) );
-
+				if (line){
+					//photPosX = 0;
+					photPosX = distributionWidth(generator);
+					photPosY = distributionPosY(generator);
+					photPosR = sqrt( pow(photPosX,2) + pow(photPosY,2) );
+				}
 				if (verbosity){
 					std::cout << "Generated a point (x y):\t" << photPosX << " " << photPosY << std::endl;
 				}
@@ -774,15 +788,19 @@ int main(int argc, char* argv[]){
 		if (WLSShape == Circle){
 			while (!inPlate) {
 				// Across the whole plate
-				double genR = distributionPosR(generator);
-				double genTheta = distributionDir(generator);
-				photPosX = sqrt(genR)*cos(genTheta);
-				photPosY = sqrt(genR)*sin(genTheta);
+				if (!line){
+					double genR = distributionPosR(generator);
+					double genTheta = distributionDir(generator);
+					photPosX = sqrt(genR)*cos(genTheta);
+					photPosY = sqrt(genR)*sin(genTheta);
+				}
 				// On axis
-				//photPosX = 0;
-				//photPosY = distributionPos(generator);
-				photPosR = sqrt( pow(photPosX,2) + pow(photPosY,2) );
-
+				if (line){
+					//photPosX = 0;
+					photPosX = distributionWidth(generator);
+					photPosY = distributionPosY(generator);
+					photPosR = sqrt( pow(photPosX,2) + pow(photPosY,2) );
+				}
 				if (verbosity){
 					std::cout << "Generated a point (x y):\t" << photPosX << " " << photPosY << std::endl;
 
@@ -875,30 +893,30 @@ int main(int argc, char* argv[]){
 
 	// Histograms
 	TH1D *generatedTheta = new TH1D("generatedTheta", "generatedTheta", nBin, 0, 2*PI); // captured photons plotted by radius
-	TH1D *radiusHist = new TH1D("radiusHist", "radiusHist", nBin, 0, WLSLength[0]); // captured photons plotted by radius
-	TH1D *radiusCapture = new TH1D("radiusCapture", "radiusCapture", nBin, 0, WLSLength[0]); // captured photons plotted by radius
-	TH1D *radiusCapture0 = new TH1D("radiusCapture0", "radiusCapture0", nBin, 0, WLSLength[0]); // captured photons without bouncing
-	TH1D *radiusCapture1 = new TH1D("radiusCapture1", "radiusCapture1", nBin, 0, WLSLength[0]); // captured photons bouncing 1 time
-	TH1D *radiusCapture2 = new TH1D("radiusCapture2", "radiusCapture2", nBin, 0, WLSLength[0]); // captured photons bouncing two times
-	TH1D *radiusCapture3 = new TH1D("radiusCapture3", "radiusCapture3", nBin, 0, WLSLength[0]); // captured photons bouncing 3 times
-	TH1D *radiusCapture4 = new TH1D("radiusCapture4", "radiusCapture4", nBin, 0, WLSLength[0]); // captured photons bouncing 4 times
-	TH1D *radiusCapture5 = new TH1D("radiusCapture5", "radiusCapture5", nBin, 0, WLSLength[0]); // captured photons bouncing 5 times
-	TH1D *radiusCapture6 = new TH1D("radiusCapture6", "radiusCapture6", nBin, 0, WLSLength[0]); // captured photons bouncing 6 times
-	TH1D *radiusCapture7 = new TH1D("radiusCapture7", "radiusCapture7", nBin, 0, WLSLength[0]); // captured photons bouncing 7 times
-	TH1D *radiusCaptureR = new TH1D("radiusCaptureR", "radiusCaptureR", nBin, 0, WLSLength[0]); // captured photons plotted by radius
-	TH1D *radiusCapture0R = new TH1D("radiusCapture0R", "radiusCapture0R", nBin, 0, WLSLength[0]); // captured photons without bouncing
-	TH1D *radiusCapture1R = new TH1D("radiusCapture1R", "radiusCapture1R", nBin, 0, WLSLength[0]); // captured photons bouncing 1 time
-	TH1D *radiusCapture2R = new TH1D("radiusCapture2R", "radiusCapture2R", nBin, 0, WLSLength[0]); // captured photons bouncing 2 times
-	TH1D *radiusCapture3R = new TH1D("radiusCapture3R", "radiusCapture3R", nBin, 0, WLSLength[0]); // captured photons bouncing 3 times
-	TH1D *radiusCapture4R = new TH1D("radiusCapture4R", "radiusCapture4R", nBin, 0, WLSLength[0]); // captured photons bouncing 4 times
-	TH1D *radiusCapture5R = new TH1D("radiusCapture5R", "radiusCapture5R", nBin, 0, WLSLength[0]); // captured photons bouncing 5 times
-	TH1D *radiusCapture6R = new TH1D("radiusCapture6R", "radiusCapture6R", nBin, 0, WLSLength[0]); // captured photons bouncing 6 times
-	TH1D *radiusCapture7R = new TH1D("radiusCapture7R", "radiusCapture7R", nBin, 0, WLSLength[0]); // captured photons bouncing 7 times
+	TH1D *radiusHist = new TH1D("radiusHist", "radiusHist", nBin, 0, WLSLength[1]); // captured photons plotted by radius
+	TH1D *radiusCapture = new TH1D("radiusCapture", "radiusCapture", nBin, 0, WLSLength[1]); // captured photons plotted by radius
+	TH1D *radiusCapture0 = new TH1D("radiusCapture0", "radiusCapture0", nBin, 0, WLSLength[1]); // captured photons without bouncing
+	TH1D *radiusCapture1 = new TH1D("radiusCapture1", "radiusCapture1", nBin, 0, WLSLength[1]); // captured photons bouncing 1 time
+	TH1D *radiusCapture2 = new TH1D("radiusCapture2", "radiusCapture2", nBin, 0, WLSLength[1]); // captured photons bouncing two times
+	TH1D *radiusCapture3 = new TH1D("radiusCapture3", "radiusCapture3", nBin, 0, WLSLength[1]); // captured photons bouncing 3 times
+	TH1D *radiusCapture4 = new TH1D("radiusCapture4", "radiusCapture4", nBin, 0, WLSLength[1]); // captured photons bouncing 4 times
+	TH1D *radiusCapture5 = new TH1D("radiusCapture5", "radiusCapture5", nBin, 0, WLSLength[1]); // captured photons bouncing 5 times
+	TH1D *radiusCapture6 = new TH1D("radiusCapture6", "radiusCapture6", nBin, 0, WLSLength[1]); // captured photons bouncing 6 times
+	TH1D *radiusCapture7 = new TH1D("radiusCapture7", "radiusCapture7", nBin, 0, WLSLength[1]); // captured photons bouncing 7 times
+	TH1D *radiusCaptureR = new TH1D("radiusCaptureR", "radiusCaptureR", nBin, 0, WLSLength[1]); // captured photons plotted by radius
+	TH1D *radiusCapture0R = new TH1D("radiusCapture0R", "radiusCapture0R", nBin, 0, WLSLength[1]); // captured photons without bouncing
+	TH1D *radiusCapture1R = new TH1D("radiusCapture1R", "radiusCapture1R", nBin, 0, WLSLength[1]); // captured photons bouncing 1 time
+	TH1D *radiusCapture2R = new TH1D("radiusCapture2R", "radiusCapture2R", nBin, 0, WLSLength[1]); // captured photons bouncing 2 times
+	TH1D *radiusCapture3R = new TH1D("radiusCapture3R", "radiusCapture3R", nBin, 0, WLSLength[1]); // captured photons bouncing 3 times
+	TH1D *radiusCapture4R = new TH1D("radiusCapture4R", "radiusCapture4R", nBin, 0, WLSLength[1]); // captured photons bouncing 4 times
+	TH1D *radiusCapture5R = new TH1D("radiusCapture5R", "radiusCapture5R", nBin, 0, WLSLength[1]); // captured photons bouncing 5 times
+	TH1D *radiusCapture6R = new TH1D("radiusCapture6R", "radiusCapture6R", nBin, 0, WLSLength[1]); // captured photons bouncing 6 times
+	TH1D *radiusCapture7R = new TH1D("radiusCapture7R", "radiusCapture7R", nBin, 0, WLSLength[1]); // captured photons bouncing 7 times
 
 	TH2D *generatedPosCart = new TH2D("generatedPosCart", "generatedPosCart", nBin, -WLSLength[0]/2, WLSLength[0]/2, nBin, -WLSLength[1]/2, WLSLength[1]/2); // mapping of plate
 	TH2D *generatedDirCart = new TH2D("generatedDirCart", "generatedDirCart", nBin, -WLSLength[0]/2, WLSLength[0]/2, nBin, -WLSLength[1]/2, WLSLength[1]/2); // mapping of plate
 	TH2D *captureMapCart = new TH2D("captureMapCart", "captureMapCart", nBin, -WLSLength[0]/2, WLSLength[0]/2, nBin, -WLSLength[1]/2, WLSLength[1]/2); // mapping of plate
-	TH2D *captureMap = new TH2D("captureMap", "captureMap", nBin, 0, 2*PI, nBin, 0, WLSLength[0]); // mapping of plate
+	TH2D *captureMap = new TH2D("captureMap", "captureMap", nBin, 0, 2*PI, nBin, 0, WLSLength[1]); // mapping of plate
 
 	radiusHist->Sumw2();
 	radiusCapture->Sumw2();

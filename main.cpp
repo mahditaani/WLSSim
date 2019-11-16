@@ -54,6 +54,8 @@ void ShowHelpMessage(std::string a){
 			  << "\t-n,--numphots\t\tSpecify the number of photons to generate in the plate\n"
 			  << "\t--air\t\t\tThe plate is immersed in air\n"
 			  << "\t--water\t\t\tThe plate is immersed in water\n"
+			  << "\t--line\t\t\tPhotons generated along one axis\n"
+			  << "\t--p3\t\t\tPhotons given an additional 3D propagation angle\n"
 			  << "\t-v,--verbosity\t\tEnables verbose mode\n"
 			  << "\t-u,--uniform\t\tSpecify the number of photons to generate per cm^2\n"
 			  << "\t--seed\t\t\tSpecify a seed for the random number generator\n"

@@ -16,6 +16,8 @@ Options:
         -n,--numphots           Specify the number of photons to generate in the plate
         --air                   The plate is immersed in air
         --water                 The plate is immersed in water
+        --line                  Photons generated along one axis
+	--p3                    Photons given an additional 3D propagation angle
         -v,--verbosity          Enables verbose mode
         -u,--uniform            Specify the number of photons to generate per cm^2
         --seed                  Specify a seed for the random number generator

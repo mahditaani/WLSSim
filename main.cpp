@@ -357,7 +357,7 @@ int main(int argc, char* argv[]){
 	bool prop3d = false;
 	bool chosenName = false;
 	std::string fileName;
-
+	
 	// Simulation Options
     int numPhots = 1000000; // number of photons to generate
 	bool verbosity = false; 
@@ -512,9 +512,9 @@ int main(int argc, char* argv[]){
 		if (std::string(argv[i]) == "--fname") {
             if (i + 1 < argc) { // Make sure we aren't at the end of argv!
 				if( HasRootExt(std::string(argv[i+1]))) {
-					i++; // don't check next argument
 					fileName = std::string(argv[i+1]);
 					chosenName = true;
+					i++; // don't check next argument
 				} else {
 					std::cerr << "--fname option has an invalid argument. Option must be a root filename e.g. file.root" << std::endl;
 					exit(1);

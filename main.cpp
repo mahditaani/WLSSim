@@ -781,14 +781,14 @@ int main(int argc, char* argv[]){
 			while (!inPlate) {
 				// Across the whole plate
 				if (!line){
-					photPosX = distributionPosX(generator);
-					photPosY = distributionPosY(generator);
+					photPosX = distributionPos(generator);
+					photPosY = distributionPos(generator);
 				}
 				// On axis
 				if (line){
 					//photPosX = 0.0;
 					photPosX = distributionWidth(generator);
-					photPosY = std::abs(distributionPosY(generator));
+					photPosY = std::abs(distributionPos(generator));
 					photPosR = sqrt( pow(photPosX,2) + pow(photPosY,2) );
 				}
 				if (verbosity){

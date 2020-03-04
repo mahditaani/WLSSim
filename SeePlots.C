@@ -12,10 +12,10 @@
 
 
 
-void SeePlots(){
+void SeePlots(std::string file = "WLS.root"){
 	gStyle->SetOptStat(0);
 
-	TFile *inFile = new TFile("WLS.root", "READ");
+	TFile *inFile = new TFile(file.c_str(), "READ");
 	TTree *inTree = (TTree*) inFile->Get("simulation");
 
 	double posX, posY, posR, dirX, dirY, dirT ;

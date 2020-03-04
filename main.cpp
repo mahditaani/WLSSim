@@ -789,8 +789,10 @@ int main(int argc, char* argv[]){
 					//photPosX = 0.0;
 					photPosX = distributionWidth(generator);
 					photPosY = std::abs(distributionPos(generator));
-					photPosR = sqrt( pow(photPosX,2) + pow(photPosY,2) );
 				}
+
+				photPosR = sqrt( pow(photPosX,2) + pow(photPosY,2) );
+
 				if (verbosity){
 					std::cout << "Generated a point (x y):\t" << photPosX << " " << photPosY << std::endl;
 				}
@@ -814,8 +816,10 @@ int main(int argc, char* argv[]){
 					//photPosX = 0;
 					photPosX = distributionWidth(generator);
 					photPosY = distributionPosY(generator);
-					photPosR = sqrt( pow(photPosX,2) + pow(photPosY,2) );
 				}
+
+				photPosR = sqrt( pow(photPosX,2) + pow(photPosY,2) );
+
 				if (verbosity){
 					std::cout << "Generated a point (x y):\t" << photPosX << " " << photPosY << std::endl;
 				}
@@ -842,8 +846,10 @@ int main(int argc, char* argv[]){
 					//photPosX = 0;
 					photPosX = distributionWidth(generator);
 					photPosY = distributionPosY(generator);
-					photPosR = sqrt( pow(photPosX,2) + pow(photPosY,2) );
 				}
+
+				photPosR = sqrt( pow(photPosX,2) + pow(photPosY,2) );
+
 				if (verbosity){
 					std::cout << "Generated a point (x y):\t" << photPosX << " " << photPosY << std::endl;
 

@@ -686,9 +686,24 @@ int main(int argc, char* argv[]){
 
 
 	if (!chosenName){
-    	// Designates a seperate tag for each combination of plate size
-    	fileName = "WLS_" + shape + "_" + std::to_string(WLSLength[0]) + "x" + 	std::to_string(WLSLength[1]) + "L" + std::to_string(attL) + ".root";
-	} 
+	  // Designates a seperate tag for each combination of plate size
+
+	    fileName = 
+	      "WLS_" + shape + "_" + 
+	      std::to_string(WLSLength[0]) + 
+	      "x" + std::to_string(WLSLength[1]) + 
+	      "L" + std::to_string(attL);
+	 
+	    if    (inAir)
+	      fileName += "_air";
+	    else if(inWater)
+	      fileName += "_H20";
+	    else {
+	      std::cerr << " medium options are air or water only " << std::endl; 
+	      return -1;
+	    }
+	    fileName += ".root";
+	}
 
 
     TFile *outfile = new TFile(fileName.c_str(), "RECREATE");

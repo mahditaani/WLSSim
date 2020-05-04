@@ -12,5 +12,7 @@
 *_cc.so
 *.o
 
+*C_ACLiC_dict_rdict.pcm
+
 # Ignore compiled program
 wls 

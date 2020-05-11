@@ -88,7 +88,8 @@ bool RoughlyEqual(double a, double b){
 bool StringIsDouble(std::string a){
   bool value = true;
   try{
-    double f = std::stod(a);
+    //double f = std::stod(a);
+    std::stod(a);
   }catch(std::exception& ia){
     value = false;
   }
@@ -99,7 +100,8 @@ bool StringIsDouble(std::string a){
 bool StringIsInt(std::string a){
   bool value = true;
   try{
-    int f = std::stoi(a);
+    //int f = std::stoi(a);
+    std::stoi(a);
   }catch(std::exception& ia){
     value = false;
   }
@@ -290,6 +292,7 @@ bool ReflectPhoton(double *p, double &pDirX, double &pDirY,double *wlsL, Shape s
     // rotates the circle so that the point of the photon is at 0 degrees then sees if it is larger than the critical angle
     if(IsCrit(p[2], AngFromCenter(p[0], p[1]) , crit) ){
       ref = true;
+      
     }
   }
   
@@ -359,7 +362,7 @@ int main(int argc, char* argv[]){
   
   // Simulation Options
   int numPhots = 1000000; // number of photons to generate
-  bool verbosity = false; 
+  int verbosity = 0; 
   bool uniform = false; // toggle uniform density of photons
   
   int numBounce = 4; // Maximum number of bounces of light to trace
@@ -544,8 +547,12 @@ int main(int argc, char* argv[]){
     }
     // Verbosity
     if(std::string(argv[i]) == "-v" || std::string(argv[i]) == "--verbosity"){
-      verbosity = true;
+      if( StringIsInt( std::string(argv[i+1]) ) )
+	verbosity = std::stoi( argv[i+1] );
+      else
+	verbosity = 2;
     }
+	  
     // Uniformity
     if (std::string(argv[i]) == "-u" || std::string(argv[i]) == "--uniform") {
       if (i + 1 < argc) { // Make sure we aren't at the end of argv!
@@ -636,7 +643,8 @@ int main(int argc, char* argv[]){
   }
   
   // Some checks
-  if (PMTRadius > WLSLength[0]/2 ||  PMTRadius > WLSLength[1]/2) {
+  //  if (PMTRadius > WLSLength[0]/2 ||  PMTRadius > WLSLength[1]/2) {
+  if (PMTRadius > WLSx/2 ||  PMTRadius > WLSy/2) {
     std::cerr << "PMT is larger than the plate." << std::endl;
     exit(1);
   }
@@ -653,7 +661,7 @@ int main(int argc, char* argv[]){
     }
   }
   
-  double WLSThickness = 0; // Not used yet (2D approximation)
+  //double WLSThickness = 0; // Not used yet (2D approximation)
   double WLSRefractiveIndex = 1.58;
   double criticalAngle;
   if (inWater){criticalAngle = asin(1.33/WLSRefractiveIndex);}
@@ -776,8 +784,18 @@ int main(int argc, char* argv[]){
   
   //--------------------------------------Start of LOOP---------------------------------------------------------------
   for (int i = 0; i <numPhots; i++){
-    if (i == 0){std::cout << "Plate size: " << WLSLength[0] << " x " << WLSLength[1] << ". Attenuation: " << attL << std::endl;}
-    if (i % 100000 == 0){std::cout << "Generating Photon: " << i << std::endl;}
+    
+    if(verbosity > 1){
+      if (i == 0){
+	std::cout << "Plate size: " << WLSLength[0] 
+		  << " x " << WLSLength[1] << ". Attenuation: " 
+		  << attL << std::endl;
+      }
+      if (i % 100000 == 0){
+	std::cout << "Generating Photon: " << i << std::endl;
+      }
+    }
+    
     photPosX = 0;
     photPosY = 0;
     photPosR = 0;
@@ -807,13 +825,13 @@ int main(int argc, char* argv[]){
 	
 	photPosR = sqrt( pow(photPosX,2) + pow(photPosY,2) );
 	
-	if (verbosity){
+	if (verbosity > 1){
 	  std::cout << "Generated a point (x y):\t" << photPosX << " " << photPosY << std::endl;
 	}
 	
 	if (photPosR > PMTRadius ) {
 	  inPlate = true;
-	} else if (verbosity){
+	} else if (verbosity > 1){
 	  std::cout << "Generated point was inside PMT. Generating a new point." << std::endl;
 	}
       }
@@ -834,13 +852,13 @@ int main(int argc, char* argv[]){
 	
 	photPosR = sqrt( pow(photPosX,2) + pow(photPosY,2) );
 	
-	if (verbosity){
+	if (verbosity > 1){
 	  std::cout << "Generated a point (x y):\t" << photPosX << " " << photPosY << std::endl;
 	}
 	
 	if (photPosR > PMTRadius ) {
 	  inPlate = true;
-	} else if (verbosity){
+	} else if (verbosity > 1){
 	  std::cout << "Generated point was inside PMT. Generating a new point." << std::endl;
 	}
       }
@@ -864,7 +882,7 @@ int main(int argc, char* argv[]){
 	
 	photPosR = sqrt( pow(photPosX,2) + pow(photPosY,2) );
 	
-	if (verbosity){
+	if (verbosity > 1){
 	  std::cout << "Generated a point (x y):\t" << photPosX << " " << photPosY << std::endl;
 	  
 	}
@@ -879,7 +897,7 @@ int main(int argc, char* argv[]){
     initDirX = photDirX;
     initDirY = photDirY;
     
-    if (verbosity){
+    if (verbosity > 1){
       std::cout << "Generated a photon direction (theta x y):\t" << photDirTheta << " " << photDirX << " "<< photDirY << std::endl;
     }
     
@@ -892,7 +910,7 @@ int main(int argc, char* argv[]){
     hPMT = 0;
     reflect = 0;
     
-    if (verbosity){
+    if (verbosity > 1){
       std::cout << "Propagating photon: " << i << std::endl;
       std::cout << "Pos: " << photonPosTemp[0] << " " << photonPosTemp[1] << std::endl;
     }
@@ -900,7 +918,7 @@ int main(int argc, char* argv[]){
     while (!hitPMT && reflect <= numBounce && !lost && !attenuated){
       
       PropagatePhoton(photonPosTemp, increment, photDirX, photDirY, WLSLength, PMTRadius, WLSShape, dist);
-      if (verbosity){
+      if (verbosity > 1){
 	std::cout << "Pos: " << photonPosTemp[0] << " " << photonPosTemp[1] << std::endl;
       }
       
@@ -908,7 +926,7 @@ int main(int argc, char* argv[]){
 	hitPMT = true;
 	hPMT = 1;
 	status = 0;
-	if (verbosity){
+	if (verbosity > 1){
 	  std::cout << "PMT Hit" << std::endl;
 	  
 	}
@@ -922,7 +940,7 @@ int main(int argc, char* argv[]){
 	  status = 1;
 	}
 	
-	if (verbosity){
+	if (verbosity > 1){
 	  std::cout << "Edge Hit" << std::endl;
 	  
 	}
@@ -978,7 +996,7 @@ int main(int argc, char* argv[]){
   TH1D *radiusCapture5R = new TH1D("radiusCapture5R", "radiusCapture5R", nBin, 0, WLSLength[1]); // captured photons bouncing 5 times
   TH1D *radiusCapture6R = new TH1D("radiusCapture6R", "radiusCapture6R", nBin, 0, WLSLength[1]); // captured photons bouncing 6 times
   TH1D *radiusCapture7R = new TH1D("radiusCapture7R", "radiusCapture7R", nBin, 0, WLSLength[1]); // captured photons bouncing 7 times
-  
+
   TH2D *generatedPosCart = new TH2D("generatedPosCart", "generatedPosCart", nBin, -WLSLength[0]/2, WLSLength[0]/2, nBin, -WLSLength[1]/2, WLSLength[1]/2); // mapping of plate
   TH2D *generatedDirCart = new TH2D("generatedDirCart", "generatedDirCart", nBin, -WLSLength[0]/2, WLSLength[0]/2, nBin, -WLSLength[1]/2, WLSLength[1]/2); // mapping of plate
   TH2D *captureMapCart = new TH2D("captureMapCart", "captureMapCart", nBin, -WLSLength[0]/2, WLSLength[0]/2, nBin, -WLSLength[1]/2, WLSLength[1]/2); // mapping of plate

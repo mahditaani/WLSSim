@@ -9,12 +9,17 @@
 
 
 
+void RemoveLabels(TH2D *h){
 
+	h->GetXaxis()->SetLabelSize(0);
+	h->GetYaxis()->SetLabelSize(0);
+
+}
 
 
 void SeePlots(std::string file = "WLS.root"){
 	gStyle->SetOptStat(0);
-
+	gStyle->SetPalette(1);
 	TFile *inFile = new TFile(file.c_str(), "READ");
 	TTree *inTree = (TTree*) inFile->Get("simulation");
 
@@ -147,9 +152,42 @@ void SeePlots(std::string file = "WLS.root"){
 	TCanvas *c4 = new TCanvas("c4", "c4");
 	mapEff2->Draw("COLZ");
 
+	TCanvas *c5 = new TCanvas("c5","c5");
+	c5->SetTitle("");
 
+//	double low = -11.5 + 25;
+//	double high = 11.5 + 25;
+	double low = 0;
+	double high = 50;
+///*
+	mapEff->GetXaxis()->SetRangeUser(low,high);
+	mapEff->GetYaxis()->SetRangeUser(low,high);
+	mapEff0->GetXaxis()->SetRangeUser(low,high);
+	mapEff0->GetYaxis()->SetRangeUser(low,high);
+	mapEff1->GetXaxis()->SetRangeUser(low,high);
+	mapEff1->GetYaxis()->SetRangeUser(low,high);
+	mapEff2->GetXaxis()->SetRangeUser(low,high);
+	mapEff2->GetYaxis()->SetRangeUser(low,high);
+//*/
+	mapEff->SetTitle("Full Plate Efficiency");
+	mapEff0->SetTitle("0 Reflection Component");
+	mapEff1->SetTitle("1 Reflection Component");
+	mapEff2->SetTitle("2 Reflection Component");
+//	RemoveLabels(mapEff);
+	RemoveLabels(mapEff0);
+	RemoveLabels(mapEff1);
+	RemoveLabels(mapEff2);
 
-
+	c5->Divide(2,2);
+	c5->cd(1);
+	mapEff->Draw("COLZ");
+	c5->cd(2);
+	mapEff0->Draw("COLZ");
+	c5->cd(3);
+	mapEff1->Draw("COLZ");
+	c5->cd(4);
+	mapEff2->Draw("COLZ");
+	
 
 
 }

@@ -166,7 +166,8 @@ void PropagatePhoton(double *p, double i, double pDirX, double pDirY, double *wl
 
 	// Simplification -- If the angle direction is within the PMT acceptance then just stop propagation and move on
 	double r = sqrt(pow(p[0],2) + pow(p[1],2) );
-	double h = sqrt(pow(r,2) + pow(pmtR,2) ); // distance between the photon and the edge of the PMT forming a right angle with the center of the PMT
+	//double h = sqrt(pow(r,2) + pow(pmtR,2) ); // distance between the photon and the edge of the PMT forming a right angle with the center of the PMT
+	double h = r;
 	double ang = asin(pmtR/h); // angle of acceptance above or below the direct angle
 
 	double directAng = AngToCenter(p[0],p[1]); // direct angle from position to center of PMT.
